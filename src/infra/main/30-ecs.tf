@@ -44,6 +44,70 @@ resource "aws_ecs_cluster_capacity_providers" "ecs_cluster_capacity" {
 }
 
 
+resource "aws_iam_role" "ecs_vault_task_role" {
+  name = "PPAVaultTaskRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+
+resource "aws_iam_policy" "vault_task_policy" {
+  name        = "PPAEcsTaskVaultKMS"
+  description = "Policy for ECS task vault role"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "KMSAccess"
+        Effect = "Allow",
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:DescribeKey"
+        ],
+        Resource = [
+          aws_kms_key.vault_key.arn
+        ]
+      },
+      {
+        Sid = "DynamoDBARW"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:DescribeTable",
+          "dynamodb:BatchWriteItem",
+        ],
+        Effect   = "Allow",
+        Resource = aws_dynamodb_table.vault-data.arn
+      },
+
+    ]
+  })
+}
+
+
+resource "aws_iam_role_policy_attachment" "vault_task_role_attachment" {
+  policy_arn = aws_iam_policy.vault_task_policy.arn
+  role       = aws_iam_role.ecs_vault_task_role.name
+}
+
+
 #---------------------------
 # ECS Task Definition
 #---------------------------
@@ -53,7 +117,7 @@ resource "aws_ecs_task_definition" "ecs-task-def" {
   count                    = 2
   family                   = "vault-ecs-task-def-${count.index}"
   execution_role_arn       = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskExecutionRole"
-  task_role_arn            = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskExecutionRole"
+  task_role_arn            = aws_iam_role.ecs_vault_task_role.arn
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 512
