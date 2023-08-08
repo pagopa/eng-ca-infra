@@ -1,0 +1,19 @@
+{
+    "family": "busybox",
+    "networkMode": "awsvpc",
+    "taskRoleArn": "arn:aws:iam::793355522647:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::793355522647:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "name": "busybox",
+            "image": "busybox",
+            "essential": true,
+            "command": ["sleep", "3600"]
+         }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "256",
+    "memory": "512"
+}
