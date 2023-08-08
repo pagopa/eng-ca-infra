@@ -47,14 +47,14 @@ jobs:
           AWS_REGION: eu-south-1
         uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838
         with:
-          role-to-assume: ${{ secrets.IAM_ROLE }}
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.IAM_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Apply
         uses: ./.github/workflows/apply
         with:
           env: ${{ inputs.environment }}
-          working-directory: src/main
+          working-directory: src/infra/main
 
   merge-trigger:
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -63,7 +63,7 @@ jobs:
         max-parallel: 1
         matrix:
           environment: [dev]
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-22.04
       continue-on-error: false
       environment: ${{ matrix.environment }}
       permissions:
@@ -84,4 +84,4 @@ jobs:
           uses: ./.github/workflows/apply
           with:
             env: ${{ matrix.environment }}
-            working-directory: src/main
+            working-directory: src/infra/main
