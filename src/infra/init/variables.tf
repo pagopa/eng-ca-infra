@@ -13,7 +13,7 @@ variable "environment" {
 variable "github_repository" {
   type        = string
   description = "This github repository"
-  default     = "https://github.com/pagopa/eng-ca.git"
+  default     = "pagopa/eng-ca"
 }
 
 variable "create_backend" {
