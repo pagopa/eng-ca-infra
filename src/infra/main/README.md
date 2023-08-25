@@ -24,7 +24,7 @@
 |------|------|
 | [aws_cloudwatch_log_group.ecs_vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_log_group.ecs_vault_sd](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/cloudwatch_log_group) | resource |
-| [aws_dynamodb_table.vault-data](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/dynamodb_table) | resource |
+| [aws_dynamodb_table.vault_data](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/dynamodb_table) | resource |
 | [aws_ecr_repository.vault_ecr](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecr_repository) | resource |
 | [aws_ecs_cluster.ecs_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_cluster) | resource |
 | [aws_ecs_cluster.ecs_cluster_sd](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_cluster) | resource |

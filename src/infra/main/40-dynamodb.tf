@@ -1,9 +1,9 @@
 # __generated__ by Terraform
 # Please review these resources and move them into your main configuration files.
 
-# __generated__ by Terraform from "vault-data"
+# __generated__ by Terraform from "vault_data"
 
-resource "aws_dynamodb_table" "vault-data" {
+resource "aws_dynamodb_table" "vault_data" {
 
   billing_mode                = "PROVISIONED"
   deletion_protection_enabled = false
