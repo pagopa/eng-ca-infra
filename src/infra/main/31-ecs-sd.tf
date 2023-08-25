@@ -1,3 +1,13 @@
+resource "aws_ecr_repository" "vault_ecr" {
+  name                 = var.ecr_name
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+}
+
 #---------------------------
 # ECS CloudWatch Log Group
 #---------------------------
@@ -195,7 +205,7 @@ resource "aws_service_discovery_private_dns_namespace" "vault" {
 
 resource "aws_service_discovery_service" "vault" {
   count = 2
-  name  = format("%s%s", var.ecs_service_name, count.index)
+  name  = format("%s-srv%s", var.ecs_service_name, count.index)
 
   dns_config {
     namespace_id = aws_service_discovery_private_dns_namespace.vault.id
@@ -259,8 +269,6 @@ resource "aws_ecs_service" "vault_svc" {
   service_registries {
     registry_arn = aws_service_discovery_service.vault[count.index].arn
   }
-
-  depends_on = [aws_service_discovery_service.vault]
 
 }
 

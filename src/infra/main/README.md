@@ -23,15 +23,12 @@
 | Name | Type |
 |------|------|
 | [aws_cloudwatch_log_group.ecs_vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/cloudwatch_log_group) | resource |
-| [aws_cloudwatch_log_group.ecs_vault_sd](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/cloudwatch_log_group) | resource |
 | [aws_dynamodb_table.vault_data](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/dynamodb_table) | resource |
 | [aws_ecr_repository.vault_ecr](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecr_repository) | resource |
 | [aws_ecs_cluster.ecs_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_cluster) | resource |
-| [aws_ecs_cluster.ecs_cluster_sd](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_cluster) | resource |
 | [aws_ecs_cluster_capacity_providers.ecs_cluster_capacity](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_cluster_capacity_providers) | resource |
-| [aws_ecs_cluster_capacity_providers.ecs_cluster_capacity_sd](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_cluster_capacity_providers) | resource |
-| [aws_ecs_service.vault-svc_sd](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_service) | resource |
-| [aws_ecs_task_definition.ecs-task-def_sd](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_task_definition) | resource |
+| [aws_ecs_service.vault_svc](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_service) | resource |
+| [aws_ecs_task_definition.ecs_task_def](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_task_definition) | resource |
 | [aws_iam_access_key.vault-user](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_access_key) | resource |
 | [aws_iam_policy.vault-user-policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.vault_task_policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
@@ -49,8 +46,8 @@
 | [aws_security_group.vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
 | [aws_security_group_rule.egress_web](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.vault_api_tcp](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
-| [aws_service_discovery_private_dns_namespace.vault_sd](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/service_discovery_private_dns_namespace) | resource |
-| [aws_service_discovery_service.vault_sd](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/service_discovery_service) | resource |
+| [aws_service_discovery_private_dns_namespace.vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/service_discovery_private_dns_namespace) | resource |
+| [aws_service_discovery_service.vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/service_discovery_service) | resource |
 | [random_id.name_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/data-sources/caller_identity) | data source |
 
@@ -65,7 +62,7 @@
 | <a name="input_ecr_name"></a> [ecr\_name](#input\_ecr\_name) | Name of Elastic Container Registry repo. | `string` | `"vault"` | no |
 | <a name="input_ecs_cluster_name"></a> [ecs\_cluster\_name](#input\_ecs\_cluster\_name) | Name of ECS Cluster | `string` | `"vault-ecs-cluster"` | no |
 | <a name="input_ecs_logs_retention_days"></a> [ecs\_logs\_retention\_days](#input\_ecs\_logs\_retention\_days) | ECS log group retention in days | `number` | `5` | no |
-| <a name="input_ecs_service_name"></a> [ecs\_service\_name](#input\_ecs\_service\_name) | n/a | `string` | `"vault_sd"` | no |
+| <a name="input_ecs_service_name"></a> [ecs\_service\_name](#input\_ecs\_service\_name) | n/a | `string` | `"vault"` | no |
 | <a name="input_enable_nat_gateway"></a> [enable\_nat\_gateway](#input\_enable\_nat\_gateway) | Enable/Create nat gateway | `bool` | `true` | no |
 | <a name="input_env_short"></a> [env\_short](#input\_env\_short) | Evnironment short. | `string` | `"d"` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment | `string` | `"dev"` | no |
