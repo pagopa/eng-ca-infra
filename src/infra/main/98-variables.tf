@@ -77,6 +77,7 @@ variable "dns_record_ttl" {
 variable "ecr_name" {
   description = "Name of Elastic Container Registry repo."
   default     = "vault"
+  type        = string
 }
 
 
@@ -86,6 +87,7 @@ variable "ecr_name" {
 variable "s3_bucket_name" {
   description = "Name of S3 Storage Bucket used for Vault backend"
   default     = "vault-storage"
+  type        = string
 }
 
 
@@ -95,10 +97,12 @@ variable "s3_bucket_name" {
 variable "ecs_cluster_name" {
   description = "Name of ECS Cluster"
   default     = "vault-ecs-cluster"
+  type        = string
 }
 
 variable "ecs_service_name" {
-  default = "vault-ecs-service"
+  default = "vault_sd"
+  type    = string
 }
 
 variable "ecs_logs_retention_days" {
@@ -113,6 +117,7 @@ variable "ecs_logs_retention_days" {
 #-------------------------
 variable "vault_version" {
   default = "1.14.6"
+  type    = string
 }
 
 variable "tags" {
