@@ -1,13 +1,5 @@
-resource "aws_cloudwatch_log_group" "ecs_vault" {
-  name = "ecs/vault"
 
-  retention_in_days = var.ecs_logs_retention_days
-
-  tags = {
-    Name = "vault"
-  }
-}
-
+/*
 
 #---------------------------
 # ECR

@@ -101,7 +101,7 @@ variable "ecs_cluster_name" {
 }
 
 variable "ecs_service_name" {
-  default = "vault_sd"
+  default = "vault"
   type    = string
 }
 
