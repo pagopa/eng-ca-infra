@@ -1,13 +1,3 @@
-resource "aws_ecr_repository" "vault_ecr" {
-  name                 = var.ecr_name
-  image_tag_mutability = "MUTABLE"
-  force_delete         = true
-
-  image_scanning_configuration {
-    scan_on_push = false
-  }
-}
-
 #---------------------------
 # ECS CloudWatch Log Group
 #---------------------------
@@ -21,7 +11,19 @@ resource "aws_cloudwatch_log_group" "ecs_vault" {
   }
 }
 
+#---------------------------
+# ECR Repository
+#---------------------------
 
+resource "aws_ecr_repository" "vault_ecr" {
+  name                 = var.ecr_name
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+}
 
 #---------------------------
 # ECS Cluster
@@ -223,19 +225,20 @@ resource "aws_service_discovery_service" "vault" {
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service
 resource "aws_ecs_service" "vault_svc" {
-  count           = 2
-  name            = "${var.ecs_service_name}-${count.index}"
-  cluster         = aws_ecs_cluster.ecs_cluster.arn
-  task_definition = aws_ecs_task_definition.ecs_task_def[count.index].arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  count                  = 2
+  name                   = "${var.ecs_service_name}-${count.index}"
+  cluster                = aws_ecs_cluster.ecs_cluster.arn
+  task_definition        = aws_ecs_task_definition.ecs_task_def[count.index].arn
+  desired_count          = 1
+  launch_type            = "FARGATE"
+  enable_execute_command = var.env_short == "d" ? true : false
 
   network_configuration {
-    subnets = module.vpc.public_subnets
+    subnets = module.vpc.private_subnets
     security_groups = [
       aws_security_group.vault.id
     ]
-    assign_public_ip = "true"
+    assign_public_ip = "false"
   }
 
   service_connect_configuration {
