@@ -1,5 +1,8 @@
-resource "aws_cloudwatch_log_group" "ecs_vault_sd" {
-  name = "ecs/vault-sc"
+#---------------------------
+# ECS CloudWatch Log Group
+#---------------------------
+resource "aws_cloudwatch_log_group" "ecs_vault" {
+  name = "ecs/vault"
 
   retention_in_days = var.ecs_logs_retention_days
 
@@ -8,18 +11,30 @@ resource "aws_cloudwatch_log_group" "ecs_vault_sd" {
   }
 }
 
+#---------------------------
+# ECR Repository
+#---------------------------
 
+resource "aws_ecr_repository" "vault_ecr" {
+  name                 = var.ecr_name
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+}
 
 #---------------------------
 # ECS Cluster
 #---------------------------
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster
-resource "aws_ecs_cluster" "ecs_cluster_sd" {
-  name = format("%s-sd", var.ecs_cluster_name)
+resource "aws_ecs_cluster" "ecs_cluster" {
+  name = var.ecs_cluster_name
 }
 
-resource "aws_ecs_cluster_capacity_providers" "ecs_cluster_capacity_sd" {
-  cluster_name = aws_ecs_cluster.ecs_cluster_sd.name
+resource "aws_ecs_cluster_capacity_providers" "ecs_cluster_capacity" {
+  cluster_name = aws_ecs_cluster.ecs_cluster.name
 
   capacity_providers = ["FARGATE"]
 
@@ -30,15 +45,82 @@ resource "aws_ecs_cluster_capacity_providers" "ecs_cluster_capacity_sd" {
   }
 }
 
+#---------------------------
+# ECS Roles & Policies
+#---------------------------
+
+resource "aws_iam_role" "ecs_vault_task_role" {
+  name = "PPAVaultTaskRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+
+resource "aws_iam_policy" "vault_task_policy" {
+  name        = "PPAEcsTaskVaultKMS"
+  description = "Policy for ECS task vault role"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "KMSAccess"
+        Effect = "Allow",
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:DescribeKey"
+        ],
+        Resource = [
+          aws_kms_key.vault_key.arn
+        ]
+      },
+      {
+        Sid = "DynamoDBARW"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:DescribeTable",
+          "dynamodb:BatchWriteItem",
+        ],
+        Effect   = "Allow",
+        Resource = aws_dynamodb_table.vault_data.arn
+      },
+
+    ]
+  })
+}
+
+
+resource "aws_iam_role_policy_attachment" "vault_task_role_attachment" {
+  policy_arn = aws_iam_policy.vault_task_policy.arn
+  role       = aws_iam_role.ecs_vault_task_role.name
+}
+
 
 #---------------------------
 # ECS Task Definition
 #---------------------------
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition
 
-resource "aws_ecs_task_definition" "ecs-task-def_sd" {
+resource "aws_ecs_task_definition" "ecs_task_def" {
   count                    = 2
-  family                   = "vault-ecs-task-def-${count.index}_sd"
+  family                   = "vault-ecs-task-def-${count.index}"
   execution_role_arn       = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskExecutionRole"
   task_role_arn            = aws_iam_role.ecs_vault_task_role.arn
   requires_compatibilities = ["FARGATE"]
@@ -53,7 +135,7 @@ resource "aws_ecs_task_definition" "ecs-task-def_sd" {
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
-        "awslogs-group": "${aws_cloudwatch_log_group.ecs_vault_sd.id}",
+        "awslogs-group": "${aws_cloudwatch_log_group.ecs_vault.id}",
         "awslogs-region": "${var.aws_region}",
         "awslogs-stream-prefix": "${var.ecs_service_name}"
       }
@@ -117,63 +199,51 @@ TASK_DEFINITION
   }
 }
 
-resource "aws_service_discovery_private_dns_namespace" "vault_sd" {
-  name        = "vault.local"
+resource "aws_service_discovery_private_dns_namespace" "vault" {
+  name        = "vault.private"
   description = "Vault private DNS namespace"
   vpc         = module.vpc.vpc_id
 }
 
-resource "aws_service_discovery_service" "vault_sd" {
+resource "aws_service_discovery_service" "vault" {
   count = 2
-  name  = format("%s%s", var.ecs_service_name, count.index)
+  name  = format("%s-srv%s", var.ecs_service_name, count.index)
 
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.vault_sd.id
+    namespace_id = aws_service_discovery_private_dns_namespace.vault.id
 
     dns_records {
       ttl  = 10
       type = "A"
     }
   }
-
-  /*
-  health_check_config {
-    failure_threshold = 10
-    resource_path     = "/v1/sys/health"
-    type              = "HTTP"
-  }
-  */
 }
 
+#---------------------------
+# ECS Service
+#---------------------------
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service
-resource "aws_ecs_service" "vault-svc_sd" {
-  count           = 2
-  name            = "${var.ecs_service_name}-${count.index}"
-  cluster         = aws_ecs_cluster.ecs_cluster_sd.arn
-  task_definition = aws_ecs_task_definition.ecs-task-def_sd[count.index].arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+resource "aws_ecs_service" "vault_svc" {
+  count                  = 2
+  name                   = "${var.ecs_service_name}-${count.index}"
+  cluster                = aws_ecs_cluster.ecs_cluster.arn
+  task_definition        = aws_ecs_task_definition.ecs_task_def[count.index].arn
+  desired_count          = 1
+  launch_type            = "FARGATE"
+  enable_execute_command = var.env_short == "d" ? true : false
 
   network_configuration {
-    subnets = module.vpc.public_subnets
+    subnets = module.vpc.private_subnets
     security_groups = [
       aws_security_group.vault.id
     ]
-    assign_public_ip = "true"
+    assign_public_ip = "false"
   }
-
-  /*
-   service_discovery {
-      namespace_id = aws_servicediscovery_private_dns_namespace.vault_sd.id
-      name = "vault_ns_sd"
-    }
-
-  */
 
   service_connect_configuration {
     enabled   = true
-    namespace = aws_service_discovery_private_dns_namespace.vault_sd.arn
+    namespace = aws_service_discovery_private_dns_namespace.vault.arn
     service {
       client_alias {
         dns_name = "vault${count.index}"
@@ -193,17 +263,15 @@ resource "aws_ecs_service" "vault-svc_sd" {
     #TODO: this does not work.If you recreate the service discovery you need to delete the service before.
     /*
     triggers = {
-      redeployment = aws_service_discovery_service.vault_sd[count.index].arn
+      redeployment = aws_service_discovery_service.vault[count.index].arn
     }
     */
 
   }
 
   service_registries {
-    registry_arn = aws_service_discovery_service.vault_sd[count.index].arn
+    registry_arn = aws_service_discovery_service.vault[count.index].arn
   }
-
-  depends_on = [aws_service_discovery_service.vault_sd]
 
 }
 
