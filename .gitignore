@@ -31,3 +31,6 @@ override.tf.json
 # Python files
 **/.venv
 **/.pytest_cache
+
+# AWS Lambda files
+**/*.zip
