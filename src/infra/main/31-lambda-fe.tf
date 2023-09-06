@@ -8,7 +8,7 @@ resource "null_resource" "deps_installer" { #TODO adjust path
   provisioner "local-exec" {
     command = <<EOT
     chmod +x deps_installer.sh
-    deps_installer.sh ${local.relative_path_layer} ${var.lambda_arch} ${local.python_version} ${local.relative_path_requirements}
+    ./deps_installer.sh ${local.relative_path_layer} ${var.lambda_arch} ${local.python_version} ${local.relative_path_requirements}
     EOT
   }
 }
@@ -67,7 +67,7 @@ resource "aws_lambda_function" "lambda_ca" { #todo adjust all
   }
 
   vpc_config {
-    subnet_ids         = module.vpc.private_subnets[*].id
+    subnet_ids         = module.vpc.private_subnets[*]
     security_group_ids = [aws_security_group.frontend.id]
   }
 
@@ -140,7 +140,7 @@ resource "aws_security_group" "frontend" {
 #---------------------------
 #TODO remember to modify those in packer/cw-config.json! ugly, but packer comes first than cloud-init (still valid (?)).
 resource "aws_cloudwatch_log_group" "frontend_application_log" {
-  name              = "/aws/lambda/${aws_lambda_function.lambda_ca.function_name}"
+  name              = "/lambda/${aws_lambda_function.lambda_ca.function_name}"
   retention_in_days = 90
 }
 

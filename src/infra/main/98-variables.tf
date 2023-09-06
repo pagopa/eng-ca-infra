@@ -102,7 +102,7 @@ variable "lambda_arch" {
 }
 variable "handler_name" {
   description = "Lambda function name"
-  default     = "frontend.__init__.lambda_handler"
+  default     = "__init__.lambda_handler"
 }
 
 variable "blueprint_api_prefix" {
