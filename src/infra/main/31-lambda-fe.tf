@@ -5,6 +5,9 @@
 #Build app dependencies 
 # null_resource used for its field "triggers" #TODO is lambda_ca still correct (?)
 resource "null_resource" "deps_installer" { #TODO adjust path
+  triggers = {
+    always_run = "${timestamp()}"
+  }
   provisioner "local-exec" {
     command = <<EOT
     chmod +x deps_installer.sh
