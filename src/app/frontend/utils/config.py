@@ -1,5 +1,6 @@
 """config"""
 import os
+from enum import Enum
 from typing import Optional
 
 from .logger import logger
@@ -8,11 +9,20 @@ DEFAULT_MAP = {
     "ENCODING": "utf-8",
     "HTTP_ATTEMPTS": "3",
     "HTTP_TIMEOUT": "6",
-    "MAX_RETRY_JWT_VALIDATION": "1",
+    "HTTP_CLIENT_EXTERNAL_TIMEOUT" : "6",
+    "HTTP_CLIENT_INTERNAL_TIMEOUT" : "3",
+    "MAX_RETRY_DNS_VALIDATION": "3",
 }
 
 
-
+class RequestType(Enum):
+    """Simple enum class to represent the type of request that
+    is possible to make against Vault"""
+    LIST = "LIST"
+    GET = "GET"
+    SIGN = "SIGN"
+    REVOKE = "REVOKE"
+    LOGIN = "LOGIN"
 
 class Config:
     """class Config"""

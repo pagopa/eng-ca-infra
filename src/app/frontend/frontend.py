@@ -3,31 +3,30 @@ import hashlib
 import json
 import logging
 import re
-from os import environ
-import requests as http_client
+
 from cryptography.hazmat.backends import default_backend as crypto_backend
 from cryptography.x509 import load_pem_x509_certificate, load_pem_x509_csr
-from cryptography.x509.extensions import \
-    ExtensionNotFound as X509ExtensionNotFound
+from cryptography.x509.extensions import ExtensionNotFound as X509ExtensionNotFound
 from cryptography.x509.oid import ExtensionOID as X509ExtensionOID
 from cryptography.x509.oid import NameOID as X509NameOID
 from email_validator import EmailNotValidError, validate_email
 from flask import Blueprint, escape, jsonify, request
-from werkzeug.exceptions import BadRequest, ServiceUnavailable, Forbidden
-from werkzeug.urls import url_fix as url_encode_fix
-from flaskr.utils import (
+from werkzeug.exceptions import BadRequest, ServiceUnavailable
+
+from .utils.config import Config, RequestType
+from .utils.utils import (
     extract_client_ip,
-    log_and_quit,
     log,
+    log_and_quit,
+    make_request_to_vault,
     publish_to_sns,
     require_authorization_header,
-    require_json_request_body
+    require_json_request_body,
 )
 
-
 # timeout for all requests
-HTTP_CLIENT_EXTERNAL_TIMEOUT = 6  # in seconds
-HTTP_CLIENT_INTERNAL_TIMEOUT = 3
+HTTP_CLIENT_EXTERNAL_TIMEOUT = int( Config.get_defaulted_env("HTTP_CLIENT_EXTERNAL_TIMEOUT"))
+HTTP_CLIENT_INTERNAL_TIMEOUT = int( Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
 
 # Environment variables support
 BLUEPRINT_API_PREFIX = "/v1"
@@ -52,28 +51,13 @@ def list_intermediate(intermediate_id):
     intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
     # get the hash of the token for session tracking
     h_token = hashlib.sha256(bytes(token, encoding="utf-8")).hexdigest()
-    # build the request
-    backend_endpoint = url_encode_fix(
-        (
-            f'{environ[VAULT_ADDR]}'
-            f'{environ["VAULT_LIST_PATH"].format(intermediate_id)}'
-        )
-    )
-    try:
-        # for some reason Vault expects a LIST HTTP method
-        req = http_client.request(
-            "LIST", backend_endpoint,
-            headers={"X-Vault-Token": token},
-            # INTERNAL_TIMEOUT as no external endpoints are called
-            timeout=HTTP_CLIENT_INTERNAL_TIMEOUT
-        )
-    except http_client.exceptions.RequestException:
-        error_msg = "Timeout or network errors."
-        log_and_quit(client_ip, request.path, error_msg, ServiceUnavailable)
-    if req.status_code != 200:
-        # likely because of an invalid token
-        error_msg = "Invalid authorization."
-        log_and_quit(client_ip, request.path, error_msg, Forbidden)
+
+    resp_tuple = make_request_to_vault(intermediate_id, h_token, RequestType.LIST)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    req = resp_tuple[0]
+    
     try:
         serial_numbers = req.json()["data"]["keys"]
     except KeyError:
@@ -121,28 +105,13 @@ def get(intermediate_id, serial_number):
     if not re.compile(regex_serial_number).match(serial_number):
         error_msg = "Unexpected parameter format."
         log_and_quit(client_ip, request.path, error_msg, BadRequest)
-    # build the request
-    backend_endpoint = url_encode_fix(
-        (
-            f'{environ[VAULT_ADDR]}'
-            f'{environ["VAULT_READ_PATH"].format(intermediate_id)}'
-            f"{serial_number}"
-        )
-    )
-    try:
-        req = http_client.get(
-            backend_endpoint,
-            headers={"X-Vault-Token": token},
-            # INTERNAL_TIMEOUT as no external endpoints are called
-            timeout=HTTP_CLIENT_INTERNAL_TIMEOUT
-        )
-    except http_client.exceptions.RequestException:
-        error_msg = "Timeout or network errors."
-        log_and_quit(client_ip, request.path, error_msg, ServiceUnavailable)
-    if req.status_code != 200:
-        # likely because of an invalid token
-        error_msg = "Invalid authorization."
-        log_and_quit(client_ip, request.path, error_msg, Forbidden)
+
+    resp_tuple = make_request_to_vault(intermediate_id, h_token, RequestType.GET ,serial_number=serial_number)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    req = resp_tuple[0]
+
     try:
         certificate = req.json()["data"]["certificate"]
     except KeyError:
@@ -242,28 +211,13 @@ def sign_csr(intermediate_id):
         signing_request_body["ttl"] = request_body["ttl"]
     except KeyError:
         pass  # ttl is an optional field
-    backend_endpoint = url_encode_fix(
-        (
-            f'{environ[VAULT_ADDR]}'
-            f'{environ["VAULT_SIGN_PATH"].format(intermediate_id)}'
-        )
-    )
-    try:
-        # make the request
-        req = http_client.post(
-            backend_endpoint,
-            json=signing_request_body,
-            headers={"X-Vault-Token": token},
-            # INTERNAL_TIMEOUT as not external endpoints are called
-            timeout=HTTP_CLIENT_INTERNAL_TIMEOUT
-        )
-    except http_client.exceptions.RequestException:
-        error_msg = "Timeout or network errors."
-        log_and_quit(client_ip, request.path, error_msg, ServiceUnavailable)
-    if req.status_code != 200:
-        # likely because of an invalid token
-        error_msg = "Invalid authorization."
-        log_and_quit(client_ip, request.path, error_msg, Forbidden)
+
+    resp_tuple = make_request_to_vault(intermediate_id, h_token, RequestType.SIGN ,signing_request_body=signing_request_body)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    req = resp_tuple[0]
+
     # everything good so far
     try:
         response_body = req.json()
@@ -413,29 +367,14 @@ def revoke(intermediate_id, serial_number):
         cert_eku = " ".join(x._name for x in raw_eku)
     except X509ExtensionNotFound:
         cert_eku = "--"
-    # build the request
-    backend_endpoint = url_encode_fix(
-        (
-            f'{environ[VAULT_ADDR]}'
-            f'{environ["VAULT_REVOKE_PATH"].format(intermediate_id)}'
-        )
-    )
-    try:
-        resp = http_client.post(
-            backend_endpoint,
-            json=request_body,
-            headers={"X-Vault-Token": token},
-            # INTERNAL_TIMEOUT as no external endpoints are called
-            timeout=HTTP_CLIENT_INTERNAL_TIMEOUT
-        )
-    except http_client.exceptions.RequestException:
-        error_msg = "Timeout or network errors."
-        log_and_quit(client_ip, request.path, error_msg, ServiceUnavailable)
-    if resp.status_code != 200:
-        # likely because of an invalid token
-        error_msg = "Invalid authorization."
-        log_and_quit(client_ip, request.path, error_msg, Forbidden)
-    # everything good so far...
+
+    resp_tuple = make_request_to_vault(intermediate_id, h_token, RequestType.REVOKE ,request_body=request_body)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    resp = resp_tuple[0]
+
+    # everything good so far
     try:
         rev_time_unix = resp.json()["data"]["revocation_time"]
         rev_time = datetime.datetime.fromtimestamp(
@@ -501,27 +440,13 @@ def login():
         error_msg = "Unexpected parameter format."
         log_and_quit(client_ip, request.path, error_msg, BadRequest)
     # build the request
-    backend_endpoint = url_encode_fix(
-        (
-            f'{environ[VAULT_ADDR]}'
-            f'{environ["VAULT_LOGIN_PATH"]}'
-        )
-    )
-    try:
-        # make the request
-        req = http_client.post(
-            # use EXTERNAL_TIMEOUT because GitHub is called for introspection
-            backend_endpoint,
-            json={"token": github_token},
-            timeout=(HTTP_CLIENT_EXTERNAL_TIMEOUT)
-        )
-    except http_client.exceptions.RequestException:
-        error_msg = "Timeout or network errors."
-        log_and_quit(client_ip, request.path, error_msg, ServiceUnavailable)
-    if req.status_code != 200:
-        # this is very likely because of wrong credentials
-        error_msg = "Invalid credentials."
-        log_and_quit(client_ip, request.path, error_msg, Forbidden)
+
+    resp_tuple = make_request_to_vault("",github_token, RequestType.LOGIN)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    req = resp_tuple[0]
+   
     # everything good so far (200 OK), attempt to parse the response
     try:
         response_body = req.json()

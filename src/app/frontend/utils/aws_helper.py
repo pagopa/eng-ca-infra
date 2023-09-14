@@ -1,3 +1,4 @@
+"""AWS interaction's dedicated Class file"""
 from typing import Optional
 
 import boto3
@@ -22,6 +23,7 @@ SNS_CLIENT = None
 
 
 class AWSHelper:
+    """ Class that handles all the interaction with AWS"""
 
 #region SSM
     @staticmethod
@@ -57,7 +59,7 @@ class AWSHelper:
         except Exception as ex:
             logger.error("[utils.aws_helper.get_ssm_parameter]: %s", repr(ex))
             return None
-        
+
     @staticmethod
     def set_ssm_parameter(client: "boto3.client.ssm", key: str, value: str):
         """
@@ -110,4 +112,5 @@ class AWSHelper:
         except Exception as ex:
             logger.error("[utils.aws_helper.publish_to_sns]: %s", repr(ex))
             return False
+
 #endregion
