@@ -3,8 +3,8 @@
 #---------------------------
 
 #Build app dependencies 
-# null_resource used for its field "triggers" #TODO is lambda_ca still correct (?)
-resource "null_resource" "deps_installer" { #TODO adjust path
+# null_resource used for its field "triggers" 
+resource "null_resource" "deps_installer" {
   triggers = {
     always_run = "${timestamp()}"
   }
@@ -57,6 +57,7 @@ resource "aws_lambda_function" "lambda_ca" { #todo adjust all
 
   environment {
     variables = {
+      AWS_REGION = var.aws_region
       #   AWS_SNS_TOPIC        = aws_sns_topic.notifications.arn #TODO insert when it's time
       BLUEPRINT_API_PREFIX = var.blueprint_api_prefix
       VAULT_1_ADDR         = "https://vault1:8200" #TODO make parametric

@@ -133,7 +133,7 @@ def get_vault_address() -> Optional[str]:
             resp = []
             for dns in vault_host_dns_list:
                 res =  http_client.get(
-                    dns,
+                    f'{dns}/v1/sys/health',
                     # INTERNAL_TIMEOUT as no external endpoints are called
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
