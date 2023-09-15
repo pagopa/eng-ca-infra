@@ -87,6 +87,54 @@ variable "dns_record_ttl" {
   default     = 86400 # 24 hours
 }
 
+#-------------------------
+# AWS API GATEWAY
+#-------------------------
+variable "apigw_name" {
+  type    = string
+  default = "certification-authority"
+}
+
+
+variable "apigw_stage_name" {
+  type    = string
+  default = "v1"
+}
+
+variable "apigw_intermediate_path" {
+  type    = string
+  default = "intermediate"
+}
+
+variable "apigw_intermediate_param_path" {
+  type    = string
+  default = "intermediate_id"
+}
+
+variable "apigw_list_path_certificates" {
+  type    = string
+  default = "certificates"
+}
+
+variable "apigw_get_revoke_path" {
+  type    = string
+  default = "serial_number"
+}
+
+variable "apigw_sign_path" {
+  type    = string
+  default = "certificate"
+}
+
+variable "apigw_revoke_path" {
+  type    = string
+  default = "serial_number"
+}
+
+variable "apigw_login_path" {
+  type    = string
+  default = "login"
+}
 
 #-------------------------
 # AWS Lambda
@@ -102,7 +150,7 @@ variable "lambda_arch" {
 }
 variable "handler_name" {
   description = "Lambda function name"
-  default     = "__init__.lambda_handler"
+  default     = "frontend.__init__.lambda_handler"
 }
 
 variable "blueprint_api_prefix" {

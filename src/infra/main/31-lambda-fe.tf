@@ -22,16 +22,21 @@ data "archive_file" "layer" {
   type        = "zip"
   source_dir  = local.relative_path_layer
   output_path = "${local.full_path_root_project}/python.zip"
-  excludes    = ["${local.relative_path_layer}/python/__pycache__"]
+  excludes    = ["__pycache__"]
 
 }
 
 # Create zip for Lambda function
 data "archive_file" "lambda" {
   type        = "zip"
-  source_dir  = local.relative_path_frontend
+  source_dir  = "${local.relative_path_app}/"
   output_path = "${local.full_path_root_project}/app.zip"
-  excludes    = ["${local.relative_path_frontend}/__pycache__"]
+  excludes = [
+    "functions/",
+    "tests/",
+    "requirements.txt",
+    "requirements-dev.txt"
+  ]
 }
 
 # Declare Aws Lambda Layer
@@ -47,7 +52,7 @@ resource "aws_lambda_layer_version" "lambda_layer" {
 }
 
 # Declare Aws Lambda function
-resource "aws_lambda_function" "lambda_ca" { #todo adjust all
+resource "aws_lambda_function" "lambda_ca" {
   depends_on    = [data.archive_file.lambda, data.archive_file.layer]
   filename      = data.archive_file.lambda.output_path
   function_name = var.lambda_name
@@ -57,7 +62,6 @@ resource "aws_lambda_function" "lambda_ca" { #todo adjust all
 
   environment {
     variables = {
-      AWS_REGION = var.aws_region
       #   AWS_SNS_TOPIC        = aws_sns_topic.notifications.arn #TODO insert when it's time
       BLUEPRINT_API_PREFIX = var.blueprint_api_prefix
       VAULT_1_ADDR         = "https://vault1:8200" #TODO make parametric
@@ -93,40 +97,40 @@ resource "aws_lambda_function" "lambda_ca" { #todo adjust all
 #TODO comment until apigw is not available
 
 
-# arn/<stage_name>/<list.http_method>/intermediate/{intermediate_id}/certificates
-# resource "aws_lambda_permission" "list" {
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda_ca.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn    = "${aws_api_gateway_rest_api.lambda_ca.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.list.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_list_path_certificates}"
-# }
+#arn/<stage_name>/<list.http_method>/intermediate/{intermediate_id}/certificates
+resource "aws_lambda_permission" "list" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_ca.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.list.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_list_path_certificates}"
+}
 
-# arn/<stage_name>/*/intermediate/{intermediate_id}/certificate/{serial_number}
-# lambda_ca resource covers get and revoke endpoint
-# resource "aws_lambda_permission" "get_revoke" {
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda_ca.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn    = "${aws_api_gateway_rest_api.lambda_ca.execution_arn}/${var.apigw_stage_name}/*/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_sign_path}/{${var.apigw_get_revoke_path}}"
+#arn/<stage_name>/*/intermediate/{intermediate_id}/certificate/{serial_number}
+#lambda_ca resource covers get and revoke endpoint
+resource "aws_lambda_permission" "get_revoke" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_ca.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/*/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_sign_path}/{${var.apigw_get_revoke_path}}"
 
-# }
+}
 
-# arn/<stage_name>/<sign_csr.http_method>/intermediate/{intermediate_id}/certificate
-# resource "aws_lambda_permission" "sign_csr" {
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda_ca.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn    = "${aws_api_gateway_rest_api.lambda_ca.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.sign_csr.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_sign_path}"
-# }
+#arn/<stage_name>/<sign_csr.http_method>/intermediate/{intermediate_id}/certificate
+resource "aws_lambda_permission" "sign_csr" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_ca.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.sign_csr.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_sign_path}"
+}
 
-# arn/<stage_name>/<sign_csr.http_method>/login
-# resource "aws_lambda_permission" "login" {
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda_ca.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn    = "${aws_api_gateway_rest_api.lambda_ca.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.login.http_method}/${var.apigw_login_path}"
+#arn/<stage_name>/<sign_csr.http_method>/login
+resource "aws_lambda_permission" "login" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_ca.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.login.http_method}/${var.apigw_login_path}"
 
-# }
+}
 
 
 #---------------------------
