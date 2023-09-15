@@ -57,7 +57,7 @@ def list_intermediate(intermediate_id):
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
     req = resp_tuple[0]
-    
+
     try:
         serial_numbers = req.json()["data"]["keys"]
     except KeyError:

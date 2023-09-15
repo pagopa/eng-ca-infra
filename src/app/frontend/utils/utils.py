@@ -5,7 +5,7 @@ from typing import Optional
 import boto3
 import botocore.client
 import requests as http_client
-from flask import Request, Response, current_app, request
+from flask import Request, current_app, request
 from werkzeug.exceptions import BadRequest, Forbidden, ServiceUnavailable, Unauthorized
 from werkzeug.urls import url_fix as url_encode_fix
 
@@ -95,19 +95,6 @@ def publish_to_sns(msg): #TODO replace this with aws_helper.publish_to_sns
     )
     sns.publish(TopicArn=environ["AWS_SNS_TOPIC"], Message=msg)
 
-
-def _get_active_dns_from_ssm() -> Optional[str]:
-        """
-        Get active vault dns value from ssm service or None
-        """
-        ssm_client = AWSHelper.get_ssm_client(Config.get_env("AWS_REGION"))
-        response = AWSHelper.get_ssm_parameter(ssm_client, "VAULT_ACTIVE_ADDRESS", decrypt=True)
-
-        # If the response is None or the value in SSM is empty
-        if not response or not response["Parameter"]["Value"]:
-            logger.error("[utils.utils.get_active_dns_from_ssm]: %s", "Error")
-            return None
-        return response["Parameter"]["Value"]
         
 
 def get_vault_address() -> Optional[str]:
@@ -119,7 +106,7 @@ def get_vault_address() -> Optional[str]:
     if not Config.get_optional_env("VAULT_ACTIVE_ADDRESS"):
 
         ssm_client = AWSHelper.get_ssm_client(Config.get_env("AWS_REGION"))
-        vault_address_ssm = AWSHelper.get_ssm_parameter(ssm_client,"VAULT_ACTIVE_ADDRESS", True )
+        vault_address_ssm = AWSHelper.get_ssm_parameter(ssm_client,"ca.eng-vault_active_address", True )
         if vault_address_ssm:
             environ["VAULT_ACTIVE_ADDRESS"] = vault_address_ssm
             return vault_address_ssm
@@ -151,7 +138,7 @@ def get_vault_address() -> Optional[str]:
 
             environ["VAULT_ACTIVE_ADDRESS"] = active_node_dns
 
-            AWSHelper.set_ssm_parameter(ssm_client, "VAULT_ACTIVE_ADDRESS", active_node_dns)
+            AWSHelper.set_ssm_parameter(ssm_client, "ca.eng-vault_active_address", active_node_dns)
             return active_node_dns
 
         #Otherwise invalidate the dns related values and return None
@@ -166,7 +153,7 @@ def invalidate_vault_address():
     """ Invalidate the vault host dns environment variable and SSM parameters value"""
     environ["VAULT_ACTIVE_ADDRESS"] = None
     ssm_client = AWSHelper.get_ssm_client(Config.get_env("AWS_REGION"))
-    AWSHelper.set_ssm_parameter(ssm_client, "VAULT_ACTIVE_ADDRESS", "")
+    AWSHelper.set_ssm_parameter(ssm_client, "ca.eng-vault_active_address", "")
 
 
 def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestType, **kwargs : dict) -> (Optional[Request], Optional[Exception], str ):
