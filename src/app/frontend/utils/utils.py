@@ -130,7 +130,7 @@ def get_vault_address() -> Optional[str]:
 
         # Initialise the variable with the dns of the vault
         # host that returned a status code 200
-        active_node_dns = (r[0] for r in resp if r[1] == 200)[0]
+        active_node_dns = list((r[0] for r in resp if r[1] == 200))[0]
 
         #If there is a value inside the variable set the env var and return it
         if active_node_dns:
