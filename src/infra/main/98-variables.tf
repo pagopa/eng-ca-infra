@@ -88,6 +88,25 @@ variable "dns_record_ttl" {
 }
 
 #-------------------------
+# DNS
+#-------------------------
+#region DNS
+variable "app_primary_domain_name" {
+  type    = string
+  default = ""
+}
+
+variable "app_api_subdomain_name" {
+  type    = string
+  default = "api"
+}
+
+variable "app_next_env_domain_name" {
+  type    = string
+  default = ""
+}
+
+#-------------------------
 # AWS API GATEWAY
 #-------------------------
 variable "apigw_name" {

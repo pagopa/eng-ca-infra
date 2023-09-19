@@ -345,7 +345,7 @@ resource "aws_api_gateway_deployment" "this" {
 }
 
 resource "aws_cloudwatch_log_group" "api_v1" {
-  name              = "/aws/apigw/${aws_api_gateway_rest_api.this.name}/${var.apigw_stage_name}"
+  name              = "/apigw/${aws_api_gateway_rest_api.this.name}/${var.apigw_stage_name}"
   retention_in_days = 90
 }
 

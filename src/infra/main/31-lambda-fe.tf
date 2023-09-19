@@ -94,7 +94,6 @@ resource "aws_lambda_function" "lambda_ca" {
 #---------------------------
 # Invocation Permission
 #---------------------------
-#TODO comment until apigw is not available
 
 
 #arn/<stage_name>/<list.http_method>/intermediate/{intermediate_id}/certificates
