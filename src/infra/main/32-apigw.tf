@@ -9,40 +9,39 @@ resource "aws_api_gateway_rest_api" "this" {
 
 }
 
-#FIXME REMOVE COMMENT
 ##
 ## Route53
 ##
-#region
-# resource "aws_api_gateway_domain_name" "api" {
-#   count                    = data.external.get_ns_primary.result.nameservers == "" ? 0 : 1
-#   domain_name              = "${var.app_api_subdomain_name}.${var.app_primary_domain_name}"
-#   regional_certificate_arn = aws_acm_certificate_validation.api_validation[0].certificate_arn
-#   endpoint_configuration {
-#     types = ["REGIONAL"]
-#   }
-#   security_policy = "TLS_1_2"
-# }
+# region
+resource "aws_api_gateway_domain_name" "api" {
+  count                    = data.external.get_ns_primary.result.nameservers == "" ? 0 : 1
+  domain_name              = "${var.app_api_subdomain_name}.${var.app_primary_domain_name}"
+  regional_certificate_arn = aws_acm_certificate_validation.api_validation[0].certificate_arn
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+  security_policy = "TLS_1_2"
+}
 
-# resource "aws_api_gateway_base_path_mapping" "api" {
-#   count       = data.external.get_ns_primary.result.nameservers == "" ? 0 : 1
-#   api_id      = aws_api_gateway_rest_api.this.id
-#   stage_name  = aws_api_gateway_stage.v1.stage_name
-#   domain_name = aws_api_gateway_domain_name.api[0].domain_name
-# }
+resource "aws_api_gateway_base_path_mapping" "api" {
+  count       = data.external.get_ns_primary.result.nameservers == "" ? 0 : 1
+  api_id      = aws_api_gateway_rest_api.this.id
+  stage_name  = aws_api_gateway_stage.v1.stage_name
+  domain_name = aws_api_gateway_domain_name.api[0].domain_name
+}
 
-# resource "aws_route53_record" "api" {
-#   count   = data.external.get_ns_primary.result.nameservers == "" ? 0 : 1
-#   name    = aws_api_gateway_domain_name.api[0].domain_name
-#   type    = "A"
-#   zone_id = aws_route53_zone.this.id
+resource "aws_route53_record" "api" {
+  count   = data.external.get_ns_primary.result.nameservers == "" ? 0 : 1
+  name    = aws_api_gateway_domain_name.api[0].domain_name
+  type    = "A"
+  zone_id = aws_route53_zone.this.id
 
-#   alias {
-#     evaluate_target_health = true
-#     name                   = aws_api_gateway_domain_name.api[0].regional_domain_name
-#     zone_id                = aws_api_gateway_domain_name.api[0].regional_zone_id
-#   }
-# }
+  alias {
+    evaluate_target_health = true
+    name                   = aws_api_gateway_domain_name.api[0].regional_domain_name
+    zone_id                = aws_api_gateway_domain_name.api[0].regional_zone_id
+  }
+}
 #endregion
 
 ##
