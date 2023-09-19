@@ -63,14 +63,13 @@ resource "aws_lambda_function" "lambda_ca" {
   environment {
     variables = {
       #   AWS_SNS_TOPIC        = aws_sns_topic.notifications.arn #TODO insert when it's time
-      BLUEPRINT_API_PREFIX = var.blueprint_api_prefix
-      VAULT_1_ADDR         = "https://vault1:8200" #TODO make parametric
-      VAULT_2_ADDR         = "https://vault2:8200" #TODO make parametric
-      VAULT_LIST_PATH      = var.vault_list_path
-      VAULT_LOGIN_PATH     = var.vault_login_path
-      VAULT_SIGN_PATH      = var.vault_sign_path
-      VAULT_READ_PATH      = var.vault_read_path
-      VAULT_REVOKE_PATH    = var.vault_revoke_path
+      VAULT_1_ADDR      = "https://vault1:8200" #TODO make parametric
+      VAULT_2_ADDR      = "https://vault2:8200" #TODO make parametric
+      VAULT_LIST_PATH   = var.vault_list_path
+      VAULT_LOGIN_PATH  = var.vault_login_path
+      VAULT_SIGN_PATH   = var.vault_sign_path
+      VAULT_READ_PATH   = var.vault_read_path
+      VAULT_REVOKE_PATH = var.vault_revoke_path
     }
   }
 

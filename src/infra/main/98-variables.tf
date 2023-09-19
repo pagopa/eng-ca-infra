@@ -172,10 +172,7 @@ variable "handler_name" {
   default     = "frontend.__init__.lambda_handler"
 }
 
-variable "blueprint_api_prefix" {
-  type    = string
-  default = "/v1"
-}
+
 variable "vault_list_path" {
   type    = string
   default = "/v1/intermediate-{}/certs"

@@ -28,14 +28,11 @@ from .utils.utils import (
 HTTP_CLIENT_EXTERNAL_TIMEOUT = int( Config.get_defaulted_env("HTTP_CLIENT_EXTERNAL_TIMEOUT"))
 HTTP_CLIENT_INTERNAL_TIMEOUT = int( Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
 
-# Environment variables support
-BLUEPRINT_API_PREFIX = "/v1"
+# DEFAULT variables support
 VAULT_ADDR = "VAULT_ADDR"
 
 # register Blueprints
-v1 = Blueprint("v1_services",
-               __name__,
-               url_prefix=BLUEPRINT_API_PREFIX)  # do not use current_app
+v1 = Blueprint("v1_services",__name__)  # do not use current_app
 
 # set INFO level for logging
 # TODO, find a way to set to DEBUG without redeploy
