@@ -1,3 +1,19 @@
+locals {
+  full_path_root_project     = "${path.cwd}/${var.project_root}"                           # ${path.cwd}/../../.. 
+  relative_path_app          = "${var.project_root}/src/app"                               # ../../../src/app 
+  relative_path_functions    = "${var.project_root}/src/app/functions"                     # ../../../src/app/functions 
+  relative_path_frontend     = "${var.project_root}/src/app/frontend"                      # ../../../src/app/frontend 
+  relative_path_requirements = "${local.relative_path_app}/requirements.txt"               # ../../../src/app/requirements.txt
+  relative_path_layer        = "${path.cwd}/../layer"                                      # ${path.cwd}/../layer
+  python_version             = file("${local.full_path_root_project}/src/.python-version") # content of .python-version file
+  # path_backend           = ""   # ../signing-services-backend #TODO: remove comment when needed
+}
+
+variable "project_root" {
+  description = "Relative path to the root of the project"
+  default     = "../../.."
+}
+
 variable "aws_region" {
   type        = string
   description = "AWS region to create resources. Default Milan"
@@ -70,6 +86,118 @@ variable "dns_record_ttl" {
   description = "Dns record ttl (in sec)"
   default     = 86400 # 24 hours
 }
+
+#-------------------------
+# DNS
+#-------------------------
+#region DNS
+variable "app_primary_domain_name" {
+  type    = string
+  default = ""
+}
+
+variable "app_api_subdomain_name" {
+  type    = string
+  default = "api"
+}
+
+variable "app_next_env_domain_name" {
+  type    = string
+  default = ""
+}
+
+#-------------------------
+# AWS API GATEWAY
+#-------------------------
+variable "apigw_name" {
+  type    = string
+  default = "certification-authority"
+}
+
+
+variable "apigw_stage_name" {
+  type    = string
+  default = "v1"
+}
+
+variable "apigw_intermediate_path" {
+  type    = string
+  default = "intermediate"
+}
+
+variable "apigw_intermediate_param_path" {
+  type    = string
+  default = "intermediate_id"
+}
+
+variable "apigw_list_path_certificates" {
+  type    = string
+  default = "certificates"
+}
+
+variable "apigw_get_revoke_path" {
+  type    = string
+  default = "serial_number"
+}
+
+variable "apigw_sign_path" {
+  type    = string
+  default = "certificate"
+}
+
+variable "apigw_revoke_path" {
+  type    = string
+  default = "serial_number"
+}
+
+variable "apigw_login_path" {
+  type    = string
+  default = "login"
+}
+
+#-------------------------
+# AWS Lambda
+#-------------------------
+variable "lambda_name" {
+  type    = string
+  default = "certification_authority"
+}
+
+variable "lambda_arch" {
+  type    = string
+  default = "x86_64"
+}
+variable "handler_name" {
+  description = "Lambda function name"
+  default     = "frontend.__init__.lambda_handler"
+}
+
+
+variable "vault_list_path" {
+  type    = string
+  default = "/v1/intermediate-{}/certs"
+}
+
+variable "vault_login_path" {
+  type    = string
+  default = "/v1/auth/github/login"
+}
+
+variable "vault_sign_path" {
+  type    = string
+  default = "/v1/intermediate-{}/sign-verbatim/client-certificate"
+}
+
+variable "vault_read_path" {
+  type    = string
+  default = "/v1/intermediate-{}/cert/"
+}
+
+variable "vault_revoke_path" {
+  type    = string
+  default = "/v1/intermediate-{}/revoke"
+}
+
 
 #-------------------------
 # ECR
