@@ -54,11 +54,12 @@ class AWSHelper:
         """
         logger.debug("[utils.aws_helper.get_ssm_parameter]")
         try:
-            response = client.get_parameter(Name=key, WithDecryption=decrypt)
-            return response["Parameter"]["Value"]
+            ssm_response = client.get_parameter(Name=key, WithDecryption=decrypt)
+            response = ssm_response["Parameter"]["Value"]
+            return response.strip() if response else response
         except Exception as ex:
             logger.error("[utils.aws_helper.get_ssm_parameter]: %s", repr(ex))
-            return None
+            return ""
 
     @staticmethod
     def set_ssm_parameter(client: "boto3.client.ssm", key: str, value: str):
