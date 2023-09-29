@@ -6,7 +6,6 @@ locals {
   relative_path_requirements = "${local.relative_path_app}/requirements.txt"               # ../../../src/app/requirements.txt
   relative_path_layer        = "${path.cwd}/../layer"                                      # ${path.cwd}/../layer
   python_version             = file("${local.full_path_root_project}/src/.python-version") # content of .python-version file
-  # path_backend           = ""   # ../signing-services-backend #TODO: remove comment when needed
 }
 
 variable "project_root" {

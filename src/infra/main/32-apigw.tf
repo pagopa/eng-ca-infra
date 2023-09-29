@@ -350,9 +350,10 @@ resource "aws_cloudwatch_log_group" "api_v1" {
 
 # Stage
 resource "aws_api_gateway_stage" "v1" {
-  deployment_id = aws_api_gateway_deployment.this.id
-  rest_api_id   = aws_api_gateway_rest_api.this.id
-  stage_name    = var.apigw_stage_name
+  deployment_id        = aws_api_gateway_deployment.this.id
+  rest_api_id          = aws_api_gateway_rest_api.this.id
+  stage_name           = var.apigw_stage_name
+  xray_tracing_enabled = true
   access_log_settings {
     format          = "$context.identity.sourceIp,$context.requestTime,$context.httpMethod,$context.path,$context.protocol,$context.status,$context.responseLength,$context.requestId,$context.extendedRequestId,$context.integrationErrorMessage"
     destination_arn = aws_cloudwatch_log_group.api_v1.arn
