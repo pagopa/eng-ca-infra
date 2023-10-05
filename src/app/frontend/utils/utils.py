@@ -1,5 +1,4 @@
 import re
-import traceback
 from os import environ
 from typing import Optional
 
@@ -127,8 +126,7 @@ def get_vault_address() -> Optional[str]:
                         timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                     )
                     resp.append((dns, res.status_code))
-                except http_client.exceptions.RequestException as ex:
-                    logger.error("Inside except caused by %s, error: %s", f'{dns}/v1/sys/health', repr(ex)) #fixme
+                except http_client.exceptions.RequestException:
                     resp.append((dns , None))
 
             # Initialise the variable with the dns of the vault
@@ -136,16 +134,13 @@ def get_vault_address() -> Optional[str]:
             active_node_dns = None
             active_node_dns_list = list((r[0] for r in resp if r[1] == 200))
 
-            logger.error("active_node_dns_list: %s", "".join(active_node_dns_list)) #FIXME delete this
 
             if active_node_dns_list:
                 active_node_dns = active_node_dns_list[0]
 
-            logger.error("active_node: %s", active_node_dns) #FIXME delete this
 
             #If there is a value inside the variable set the env var and return it
             if active_node_dns:
-                logger.error("active_node inside if: %s", active_node_dns) #FIXME delete this
                 active_node_dns = active_node_dns if active_node_dns else " "
 
                 environ["VAULT_ACTIVE_ADDRESS"] = active_node_dns
@@ -158,8 +153,9 @@ def get_vault_address() -> Optional[str]:
             return None
         #Otherwise return the value inside the env vars
         return Config.get_optional_env("VAULT_ACTIVE_ADDRESS")
-    except:
-        traceback.print_exc()
+    except Exception:
+        invalidate_vault_address()
+        return None
 
 
 
@@ -192,6 +188,7 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                                     to find the correct Vault address")
 
         except Exception as ex:
+            invalidate_vault_address()
             return None , ConnectionError , "Max retry attempts to find Vault address reached"
 
         #TODO replace this with match/case when upgrade to python 3.10
@@ -214,7 +211,9 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
             except http_client.exceptions.RequestException:
-                return None, ServiceUnavailable, "Timeout or network errors."
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
 
 
             # If the node responses with a 307 status code
@@ -248,7 +247,9 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
             except http_client.exceptions.RequestException:
-                return None, ServiceUnavailable, "Timeout or network errors."
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
 
             if resp.status_code == 307:
                 invalidate_vault_address()
@@ -278,7 +279,9 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
             except http_client.exceptions.RequestException:
-                return None, ServiceUnavailable, "Timeout or network errors."
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
 
             if resp.status_code == 307:
                 invalidate_vault_address()
@@ -307,7 +310,9 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
             except http_client.exceptions.RequestException:
-                    return None, ServiceUnavailable, "Timeout or network errors."
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
 
             if resp.status_code == 307:
                 invalidate_vault_address()
@@ -334,7 +339,9 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_EXTERNAL_TIMEOUT"))
                 )
             except http_client.exceptions.RequestException as ex:
-                return None, ServiceUnavailable, "Timeout or network errors: " + repr(ex) #FIXME change this
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
 
             if resp.status_code == 307:
                 invalidate_vault_address()
@@ -345,5 +352,7 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
             return resp, None, ""
             #endregion
 
+        
+        
 
     return None , ConnectionError , "Max retry attempts to Vault reached"
