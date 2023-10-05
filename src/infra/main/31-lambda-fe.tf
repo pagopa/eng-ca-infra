@@ -64,8 +64,8 @@ resource "aws_lambda_function" "lambda_ca" {
   environment {
     variables = {
       #   AWS_SNS_TOPIC        = aws_sns_topic.notifications.arn #TODO insert when it's time
-      VAULT_0_ADDR      = aws_service_discovery_service.vault[0].name
-      VAULT_1_ADDR      = aws_service_discovery_service.vault[1].name
+      VAULT_0_ADDR      = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_1_ADDR      = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
       VAULT_LIST_PATH   = var.vault_list_path
       VAULT_LOGIN_PATH  = var.vault_login_path
       VAULT_SIGN_PATH   = var.vault_sign_path

@@ -72,6 +72,18 @@ resource "aws_security_group_rule" "ingress_ssm" {
   cidr_blocks       = ["0.0.0.0/0"]
 }
 
+
+resource "aws_security_group_rule" "egress_web_frontend" {
+  type              = "egress"
+  description       = "Connection between Lambda and Vault inside ECS"
+  security_group_id = aws_security_group.frontend.id
+  from_port         = 8200
+  to_port           = 8200
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+
 resource "aws_security_group_rule" "egress_ssm" {
   type              = "egress"
   description       = "Egress to 443 port"
