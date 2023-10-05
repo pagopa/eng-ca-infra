@@ -327,6 +327,12 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_method.revoke.*,
       aws_api_gateway_method.login.*,
 
+      aws_api_gateway_method_response.list.*,
+      aws_api_gateway_method_response.get.*,
+      aws_api_gateway_method_response.sign_csr.*,
+      aws_api_gateway_method_response.revoke.*,
+      aws_api_gateway_method_response.login.*,
+
       aws_api_gateway_integration.list.*,
       aws_api_gateway_integration.get.*,
       aws_api_gateway_integration.sign_csr.*,
