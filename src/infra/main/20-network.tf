@@ -33,13 +33,13 @@ resource "aws_security_group" "vault" {
 }
 
 resource "aws_security_group_rule" "vault_api_tcp" {
-  type              = "ingress"
-  description       = "Vault API/UI"
-  security_group_id = aws_security_group.vault.id
-  from_port         = 8200
-  to_port           = 8200
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  type                     = "ingress"
+  description              = "Vault API/UI"
+  security_group_id        = aws_security_group.vault.id
+  from_port                = 8200
+  to_port                  = 8200
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.frontend.id
 }
 
 resource "aws_security_group_rule" "egress_web" {
@@ -69,18 +69,18 @@ resource "aws_security_group_rule" "ingress_ssm" {
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = [module.vpc.vpc_cidr_block]
 }
 
 
 resource "aws_security_group_rule" "egress_web_frontend" {
-  type              = "egress"
-  description       = "Connection between Lambda and Vault inside ECS"
-  security_group_id = aws_security_group.frontend.id
-  from_port         = 8200
-  to_port           = 8200
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  type                     = "egress"
+  description              = "Connection between Lambda and Vault inside ECS"
+  security_group_id        = aws_security_group.frontend.id
+  from_port                = 8200
+  to_port                  = 8200
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.vault.id
 }
 
 
@@ -91,7 +91,7 @@ resource "aws_security_group_rule" "egress_ssm" {
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = [module.vpc.vpc_cidr_block]
 }
 
 
