@@ -182,9 +182,9 @@ variable "vault_list_path" {
   default = "/v1/intermediate-{}/certs"
 }
 
-variable "vault_login_path" {
+variable "vault_read_path" {
   type    = string
-  default = "/v1/auth/github/login"
+  default = "/v1/intermediate-{}/cert/"
 }
 
 variable "vault_sign_path" {
@@ -192,16 +192,20 @@ variable "vault_sign_path" {
   default = "/v1/intermediate-{}/sign-verbatim/client-certificate"
 }
 
-variable "vault_read_path" {
-  type    = string
-  default = "/v1/intermediate-{}/cert/"
-}
-
 variable "vault_revoke_path" {
   type    = string
   default = "/v1/intermediate-{}/revoke"
 }
 
+variable "vault_crl_path" {
+  type    = string
+  default = "/v1/intermediate-{}/crl"
+}
+
+variable "vault_login_path" {
+  type    = string
+  default = "/v1/auth/github/login"
+}
 
 #-------------------------
 # ECR
