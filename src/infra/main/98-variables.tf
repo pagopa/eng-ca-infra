@@ -149,6 +149,11 @@ variable "apigw_revoke_path" {
   default = "serial_number"
 }
 
+variable "apigw_crl_path" {
+  type    = string
+  default = "crl"
+}
+
 variable "apigw_login_path" {
   type    = string
   default = "login"
