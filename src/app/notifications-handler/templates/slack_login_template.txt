@@ -1,0 +1,2 @@
+GitHub user $USR authenticated from $IPA
+HTK: $HTK

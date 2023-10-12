@@ -37,3 +37,48 @@ resource "aws_dynamodb_table" "vault_data" {
     enabled        = false
   }
 }
+
+## DynamoDB table for certification information storage (Expiring Cert. Checker)
+resource "aws_dynamodb_table" "certificate_information" {
+  name = "ca-eng-pagopa-it-cert-expiry-info"
+
+  attribute {
+    name = "SER"
+    type = "S"
+  }
+
+  attribute {
+    name = "INT"
+    type = "S"
+  }
+
+  attribute {
+    name = "NVA"
+    type = "N"
+  }
+
+  hash_key     = "SER"
+  billing_mode = "PAY_PER_REQUEST"
+
+  global_secondary_index {
+    name            = "secondary-index"
+    hash_key        = "INT"
+    range_key       = "NVA"
+    projection_type = "ALL"
+  }
+
+  lifecycle {
+    prevent_destroy = false
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  # enabled = false is explicit about using a AWS owned CMK for the encryption at rest,
+  # instead of using a AWS managed CMK or a Customer Manager CMK
+  server_side_encryption {
+    enabled = true
+  }
+
+}

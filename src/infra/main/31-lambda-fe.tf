@@ -30,9 +30,10 @@ data "archive_file" "layer" {
 data "archive_file" "lambda" {
   type        = "zip"
   source_dir  = "${local.relative_path_app}/"
-  output_path = "${local.full_path_root_project}/app.zip"
+  output_path = "${local.full_path_root_project}/frontend.zip"
   excludes = [
-    "functions/",
+    "expiring-cert-checker/",
+    "notifications-handler/",
     "tests/",
     "requirements.txt",
     "requirements-dev.txt"
@@ -57,7 +58,7 @@ resource "aws_lambda_function" "lambda_ca" {
   filename      = data.archive_file.lambda.output_path
   function_name = var.lambda_name
   role          = aws_iam_role.lambda_ca.arn
-  handler       = var.handler_name
+  handler       = var.frontend_handler_name
   architectures = [var.lambda_arch]
   timeout       = 30
 

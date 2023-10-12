@@ -166,7 +166,7 @@ variable "lambda_arch" {
   type    = string
   default = "x86_64"
 }
-variable "handler_name" {
+variable "frontend_handler_name" {
   description = "Lambda function name"
   default     = "frontend.__init__.lambda_handler"
 }

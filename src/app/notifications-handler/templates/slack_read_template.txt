@@ -1,0 +1,2 @@
+$IPA used $RAP API to read that certificate
+HTK: $HTK
