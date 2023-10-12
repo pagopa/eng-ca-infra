@@ -59,12 +59,13 @@ resource "aws_lambda_function" "lambda_ca" {
   role          = aws_iam_role.lambda_ca.arn
   handler       = var.handler_name
   architectures = [var.lambda_arch]
+  timeout       = 30
 
   environment {
     variables = {
       #   AWS_SNS_TOPIC        = aws_sns_topic.notifications.arn #TODO insert when it's time
-      VAULT_1_ADDR      = "https://vault1:8200" #TODO make parametric
-      VAULT_2_ADDR      = "https://vault2:8200" #TODO make parametric
+      VAULT_0_ADDR      = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_1_ADDR      = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
       VAULT_LIST_PATH   = var.vault_list_path
       VAULT_LOGIN_PATH  = var.vault_login_path
       VAULT_SIGN_PATH   = var.vault_sign_path
@@ -129,16 +130,6 @@ resource "aws_lambda_permission" "login" {
   source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.login.http_method}/${var.apigw_login_path}"
 
 }
-
-
-#---------------------------
-# Security Group
-#---------------------------
-resource "aws_security_group" "frontend" {
-  #   tags   = merge(var.common_tags, { Name = "frontend-sg" }) #todo is it useful
-  vpc_id = module.vpc.vpc_id
-}
-
 
 
 #---------------------------
@@ -216,6 +207,47 @@ data "aws_iam_policy_document" "ca_lambda_vpc" {
     ]
     resources = [
       "*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "ca_lambda_x_ray" {
+  name   = "ca_lambda_x_ray"
+  role   = aws_iam_role.lambda_ca.id
+  policy = data.aws_iam_policy_document.ca_lambda_x_ray.json
+}
+
+data "aws_iam_policy_document" "ca_lambda_x_ray" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords",
+      "xray:GetSamplingRules",
+      "xray:GetSamplingTargets",
+      "xray:GetSamplingStatisticSummaries"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "ca_lambda_ssm" {
+  name   = "ca_lambda_ssm"
+  role   = aws_iam_role.lambda_ca.id
+  policy = data.aws_iam_policy_document.ca_lambda_ssm.json
+}
+
+data "aws_iam_policy_document" "ca_lambda_ssm" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+      "ssm:PutParameter",
+    ]
+    resources = [
+      "*" #TODO change with exact arn
     ]
   }
 }

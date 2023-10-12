@@ -1,0 +1,25 @@
+[ req ]
+prompt = yes
+distinguished_name = req_distinguished_name
+name = client-certificate
+allow_any_name = true 
+key_type = rsa 
+key_bits = 2048 
+key_usage = DigitalSignature
+ext_key_usage = ClientAuth 
+ttl = 15768000 
+use_csr_common_name = true 
+use_csr_sans = false 
+require_cn = true 
+enforce_hostnames = false 
+basic_constraints_valid_for_non_ca = true 
+server_flag = false
+max_ttl = 31536000
+
+[ req_distinguished_name ]
+countryName = IT
+stateOrProvinceName = Roma
+localityName = Roma
+organizationName = PagoPA S.p.A.
+commonName = Certificato Client Internal CA
+emailAddress = email@example.com

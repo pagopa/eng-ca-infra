@@ -23,6 +23,9 @@ module "vpc" {
 
 }
 
+#---------------------------
+## Vault
+#---------------------------
 resource "aws_security_group" "vault" {
   name        = "Vault server required ports"
   vpc_id      = module.vpc.vpc_id
@@ -30,13 +33,13 @@ resource "aws_security_group" "vault" {
 }
 
 resource "aws_security_group_rule" "vault_api_tcp" {
-  type              = "ingress"
-  description       = "Vault API/UI"
-  security_group_id = aws_security_group.vault.id
-  from_port         = 8200
-  to_port           = 8200
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  type                     = "ingress"
+  description              = "Vault API/UI"
+  security_group_id        = aws_security_group.vault.id
+  from_port                = 8200
+  to_port                  = 8200
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.frontend.id
 }
 
 resource "aws_security_group_rule" "egress_web" {
@@ -48,3 +51,63 @@ resource "aws_security_group_rule" "egress_web" {
   protocol          = "all"
   cidr_blocks       = ["0.0.0.0/0"]
 }
+
+#---------------------------
+## Lambda
+#---------------------------
+
+resource "aws_security_group" "frontend" {
+  name        = "Frontend security group 01"
+  vpc_id      = module.vpc.vpc_id
+  description = "Security group for AWS Lambda"
+}
+
+resource "aws_security_group_rule" "ingress_ssm" {
+  type              = "ingress"
+  description       = "Ingress to 443 port"
+  security_group_id = aws_security_group.frontend.id
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = [module.vpc.vpc_cidr_block]
+}
+
+
+resource "aws_security_group_rule" "egress_web_frontend" {
+  type                     = "egress"
+  description              = "Connection between Lambda and Vault inside ECS"
+  security_group_id        = aws_security_group.frontend.id
+  from_port                = 8200
+  to_port                  = 8200
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.vault.id
+}
+
+
+resource "aws_security_group_rule" "egress_ssm" {
+  type              = "egress"
+  description       = "Egress to 443 port"
+  security_group_id = aws_security_group.frontend.id
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = [module.vpc.vpc_cidr_block]
+}
+
+
+# VPC endpoints
+# Needed to make Lambda talk to SSM.
+resource "aws_vpc_endpoint" "ssm" {
+  for_each = toset([
+    format("com.amazonaws.%s.ssm", var.aws_region),
+    format("com.amazonaws.%s.ec2messages", var.aws_region),
+  ])
+  vpc_id             = module.vpc.vpc_id
+  service_name       = each.key
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = module.vpc.private_subnets[*]
+  security_group_ids = [aws_security_group.frontend.id]
+
+  private_dns_enabled = true
+}
+

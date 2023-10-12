@@ -3,12 +3,12 @@ name: "Terraform-Plan"
 on:
   push:
     branches:
-      - '**'        # matches every branch
-      - '!main'     # excludes main
-      - '!master'   # excludes master
+      - "**" # matches every branch
+      - "!main" # excludes main
+      - "!master" # excludes master
     paths:
-      - 'src/infra/main/**'
-      - '.github/workflows/*.yml'
+      - "src/infra/main/**"
+      - ".github/workflows/*.yml"
 
 defaults:
   run:
@@ -16,8 +16,8 @@ defaults:
     working-directory: src/infra/main
 
 permissions:
-  id-token: write   # This is required for requesting the JWT
-  contents: read    # This is required for actions/checkout
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
 
 jobs:
   terraform:
@@ -27,7 +27,7 @@ jobs:
     name: "terraform-plan"
     runs-on: ubuntu-22.04
     environment: ${{ matrix.environment }}
-     
+
     steps:
       - name: Checkout
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
@@ -37,11 +37,11 @@ jobs:
         with:
           role-to-assume: ${{ vars.IAM_ROLE }}
           aws-region: ${{ vars.AWS_REGION }}
-      
-      - name: Read terraform version 
+
+      - name: Read terraform version
         id: read-version
         run: |
-          echo "TERRAFORM_VERSION=`cat ../.terraform-version`" >> $GITHUB_ENV
+          echo "TERRAFORM_VERSION=`cat ../../.terraform-version`" >> $GITHUB_ENV
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1

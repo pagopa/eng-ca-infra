@@ -49,7 +49,7 @@ def list_intermediate(intermediate_id):
     # get the hash of the token for session tracking
     h_token = hashlib.sha256(bytes(token, encoding="utf-8")).hexdigest()
 
-    resp_tuple = make_request_to_vault(intermediate_id, h_token, RequestType.LIST)
+    resp_tuple = make_request_to_vault(intermediate_id, token, RequestType.LIST)
 
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
@@ -103,7 +103,7 @@ def get(intermediate_id, serial_number):
         error_msg = "Unexpected parameter format."
         log_and_quit(client_ip, request.path, error_msg, BadRequest)
 
-    resp_tuple = make_request_to_vault(intermediate_id, h_token, RequestType.GET ,serial_number=serial_number)
+    resp_tuple = make_request_to_vault(intermediate_id, token, RequestType.GET ,serial_number=serial_number)
 
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
@@ -209,7 +209,7 @@ def sign_csr(intermediate_id):
     except KeyError:
         pass  # ttl is an optional field
 
-    resp_tuple = make_request_to_vault(intermediate_id, h_token, RequestType.SIGN ,signing_request_body=signing_request_body)
+    resp_tuple = make_request_to_vault(intermediate_id, token, RequestType.SIGN ,signing_request_body=signing_request_body)
 
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
@@ -365,7 +365,7 @@ def revoke(intermediate_id, serial_number):
     except X509ExtensionNotFound:
         cert_eku = "--"
 
-    resp_tuple = make_request_to_vault(intermediate_id, h_token, RequestType.REVOKE ,request_body=request_body)
+    resp_tuple = make_request_to_vault(intermediate_id, token, RequestType.REVOKE ,request_body=request_body)
 
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])

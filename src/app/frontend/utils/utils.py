@@ -83,7 +83,7 @@ def require_authorization_header(client_ip):
 
 # may raise an exception, this is intentional
 def publish_to_sns(msg): #TODO replace this with aws_helper.publish_to_sns
-    
+
     BOTO3_CONFIG_TIMEOUT = botocore.client.Config(
         connect_timeout=Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"),
         read_timeout=Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT")
@@ -95,65 +95,76 @@ def publish_to_sns(msg): #TODO replace this with aws_helper.publish_to_sns
     )
     sns.publish(TopicArn=environ["AWS_SNS_TOPIC"], Message=msg)
 
-        
 
 def get_vault_address() -> Optional[str]:
     """Return the host name of the Vault active node"""
+    try:
 
-    # If the environment variable is not set, check
-    # the value inside the parameter store, if not present
-    # retrieve the correct dns name and use it to initialize the variables
-    if not Config.get_optional_env("VAULT_ACTIVE_ADDRESS"):
+        # If the environment variable is not set, check
+        # the value inside the parameter store, if not present
+        # retrieve the correct dns name and use it to initialize the variables
+        if not Config.get_optional_env("VAULT_ACTIVE_ADDRESS"):
 
-        ssm_client = AWSHelper.get_ssm_client(Config.get_env("AWS_REGION"))
-        vault_address_ssm = AWSHelper.get_ssm_parameter(ssm_client,"ca.eng-vault_active_address", True )
-        if vault_address_ssm:
-            environ["VAULT_ACTIVE_ADDRESS"] = vault_address_ssm
-            return vault_address_ssm
+            ssm_client = AWSHelper.get_ssm_client(Config.get_env("AWS_REGION"))
+            vault_address_ssm = AWSHelper.get_ssm_parameter(
+                ssm_client,"ca.eng-vault_active_address", True )
+            if vault_address_ssm:
+                environ["VAULT_ACTIVE_ADDRESS"] = vault_address_ssm
+                return vault_address_ssm
 
-        vault_host_dns_list = [
-            Config.get_env("VAULT_1_ADDR"),
-            Config.get_env("VAULT_2_ADDR")
-        ]
+            vault_host_dns_list = [
+                Config.get_env("VAULT_0_ADDR"),
+                Config.get_env("VAULT_1_ADDR")
+            ]
 
-        try:
             resp = []
             for dns in vault_host_dns_list:
-                res =  http_client.get(
-                    f'{dns}/v1/sys/health',
-                    # INTERNAL_TIMEOUT as no external endpoints are called
-                    timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
-                )
-                resp.append(dns, res.status_code)
-        except http_client.exceptions.RequestException:
-            resp.append(dns , None)
+                try:
+                    res =  http_client.get(
+                        f'{dns}/v1/sys/health',
+                        # INTERNAL_TIMEOUT as no external endpoints are called
+                        timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
+                    )
+                    resp.append((dns, res.status_code))
+                except http_client.exceptions.RequestException:
+                    resp.append((dns , None))
 
-        # Initialise the variable with the dns of the vault
-        # host that returned a status code 200
-        active_node_dns = list((r[0] for r in resp if r[1] == 200))[0]
+            # Initialise the variable with the dns of the vault
+            # host that returned a status code 200
+            active_node_dns = None
+            active_node_dns_list = list((r[0] for r in resp if r[1] == 200))
 
-        #If there is a value inside the variable set the env var and return it
-        if active_node_dns:
-            active_node_dns = active_node_dns if active_node_dns else ""
 
-            environ["VAULT_ACTIVE_ADDRESS"] = active_node_dns
+            if active_node_dns_list:
+                active_node_dns = active_node_dns_list[0]
 
-            AWSHelper.set_ssm_parameter(ssm_client, "ca.eng-vault_active_address", active_node_dns)
-            return active_node_dns
 
-        #Otherwise invalidate the dns related values and return None
+            #If there is a value inside the variable set the env var and return it
+            if active_node_dns:
+                active_node_dns = active_node_dns if active_node_dns else " "
+
+                environ["VAULT_ACTIVE_ADDRESS"] = active_node_dns
+
+                AWSHelper.set_ssm_parameter(ssm_client, "ca.eng-vault_active_address", active_node_dns)
+                return active_node_dns
+
+            #Otherwise invalidate the dns related values and return None
+            invalidate_vault_address()
+            return None
+        #Otherwise return the value inside the env vars
+        return Config.get_optional_env("VAULT_ACTIVE_ADDRESS")
+    except Exception:
         invalidate_vault_address()
         return None
-    #Otherwise return the value inside the env vars
-    return Config.get_optional_env("VAULT_ACTIVE_ADDRESS")
+
 
 
 
 def invalidate_vault_address():
     """ Invalidate the vault host dns environment variable and SSM parameters value"""
-    environ["VAULT_ACTIVE_ADDRESS"] = None
+    environ["VAULT_ACTIVE_ADDRESS"] = ""
     ssm_client = AWSHelper.get_ssm_client(Config.get_env("AWS_REGION"))
-    AWSHelper.set_ssm_parameter(ssm_client, "ca.eng-vault_active_address", "")
+    AWSHelper.set_ssm_parameter(ssm_client, "ca.eng-vault_active_address", " ")
 
 
 def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestType, **kwargs : dict) -> (Optional[Request], Optional[Exception], str ):
@@ -176,7 +187,8 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                 raise ConnectionError("Max retry attempts exceeded when trying \
                                     to find the correct Vault address")
 
-        except Exception:
+        except Exception as ex:
+            invalidate_vault_address()
             return None , ConnectionError , "Max retry attempts to find Vault address reached"
 
         #TODO replace this with match/case when upgrade to python 3.10
@@ -199,9 +211,11 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
             except http_client.exceptions.RequestException:
-                return None, ServiceUnavailable, "Timeout or network errors." 
-            
-            
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
+
+
             # If the node responses with a 307 status code
             # then it's not the active one, it's time to
             # refresh the value inside the variables related to the vault address
@@ -211,7 +225,7 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
             if resp.status_code != 200:
                 # likely because of an invalid token
                 return None, Forbidden, "Invalid authorization."
-            
+
             return resp, None, ""
             #endregion
 
@@ -233,18 +247,20 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
             except http_client.exceptions.RequestException:
-                return None, ServiceUnavailable, "Timeout or network errors."
-            
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
+
             if resp.status_code == 307:
                 invalidate_vault_address()
                 continue
             if resp.status_code != 200:
                 # likely because of an invalid token
                 return None, Forbidden, "Invalid authorization."
-            
+
             return resp, None, ""
             #endregion
-            
+
         elif request_type == RequestType.SIGN:
             #region SIGN
             backend_endpoint = url_encode_fix(
@@ -263,15 +279,17 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
             except http_client.exceptions.RequestException:
-                return None, ServiceUnavailable, "Timeout or network errors."
-            
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
+
             if resp.status_code == 307:
                 invalidate_vault_address()
                 continue
             if resp.status_code != 200:
                 # likely because of an invalid token
                 return None, Forbidden, "Invalid authorization."
-            
+
             return resp, None, ""
             #endregion
 
@@ -292,8 +310,10 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
             except http_client.exceptions.RequestException:
-                    return None, ServiceUnavailable, "Timeout or network errors."
-            
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
+
             if resp.status_code == 307:
                 invalidate_vault_address()
                 continue
@@ -318,9 +338,11 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     # use EXTERNAL_TIMEOUT because GitHub is called for introspection
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_EXTERNAL_TIMEOUT"))
                 )
-            except http_client.exceptions.RequestException:
-                return None, ServiceUnavailable, "Timeout or network errors."
-            
+            except http_client.exceptions.RequestException as ex:
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
+
             if resp.status_code == 307:
                 invalidate_vault_address()
                 continue
@@ -330,5 +352,7 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
             return resp, None, ""
             #endregion
 
+        
+        
 
     return None , ConnectionError , "Max retry attempts to Vault reached"
