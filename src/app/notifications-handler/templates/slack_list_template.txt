@@ -1,0 +1,2 @@
+$IPA used $RAP API to list all certificates
+HTK: $HTK

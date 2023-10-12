@@ -1,0 +1,8 @@
+$IPA used $RAP API to sign a CSR:
+SUB: $SUB
+EKU: $EKU
+SAN: $SAN
+NVB: $NVB
+NVA: $NVA
+SER: $SER
+HTK: $HTK

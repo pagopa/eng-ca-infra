@@ -1,0 +1,4 @@
+A certificate is expiring:
+INT: $INT
+SER: $SER
+NVA: $NVA

@@ -1,0 +1,3 @@
+$IPA used $RAP API to revoke a certificate:
+SER: $SER
+HTK: $HTK
