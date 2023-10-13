@@ -22,6 +22,7 @@ class RequestType(Enum):
     GET = "GET"
     SIGN = "SIGN"
     REVOKE = "REVOKE"
+    CRL = "CRL"
     LOGIN = "LOGIN"
 
 class Config:

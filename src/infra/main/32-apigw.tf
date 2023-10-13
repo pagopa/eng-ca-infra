@@ -105,8 +105,7 @@ resource "aws_api_gateway_integration_response" "list" {
   status_code = aws_api_gateway_method_response.list.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 
@@ -153,8 +152,7 @@ resource "aws_api_gateway_integration_response" "get" {
   status_code = aws_api_gateway_method_response.get.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 
@@ -195,8 +193,7 @@ resource "aws_api_gateway_integration_response" "revoke" {
   status_code = aws_api_gateway_method_response.revoke.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 
@@ -243,8 +240,7 @@ resource "aws_api_gateway_integration_response" "sign_csr" {
   status_code = aws_api_gateway_method_response.sign_csr.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 
@@ -271,6 +267,14 @@ resource "aws_api_gateway_method_response" "crl" {
   resource_id = aws_api_gateway_resource.crl.id
   http_method = aws_api_gateway_method.crl.http_method
   status_code = "200"
+  response_parameters = {
+    "method.response.header.Content-Type" = true,
+  }
+
+  response_models = {
+    "application/pkix-crl" = "Empty"
+  }
+
 }
 
 resource "aws_api_gateway_integration" "crl" {
@@ -290,9 +294,9 @@ resource "aws_api_gateway_integration_response" "crl" {
   status_code = aws_api_gateway_method_response.crl.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/pkix-crl" = ""
   }
+
 }
 #endregion
 
@@ -337,8 +341,7 @@ resource "aws_api_gateway_integration_response" "login" {
   status_code = aws_api_gateway_method_response.login.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 

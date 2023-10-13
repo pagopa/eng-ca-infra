@@ -1,3 +1,4 @@
+import base64
 import datetime
 import hashlib
 import json
@@ -44,7 +45,7 @@ def list_intermediate(intermediate_id):
     client_ip = extract_client_ip()
     token = require_authorization_header(client_ip)
     # convert intermediate_id integer to a string
-    # ASSUMPTION! here and on nginx.conf, we have up to 100 CA (from 0 to 99)
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
     intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
     # get the hash of the token for session tracking
     h_token = hashlib.sha256(bytes(token, encoding="utf-8")).hexdigest()
@@ -94,7 +95,7 @@ def get(intermediate_id, serial_number):
     client_ip = extract_client_ip()
     token = require_authorization_header(client_ip)
     # convert intermediate_id integer to a string
-    # ASSUMPTION! here and on nginx.conf, we have up to 100 CA (from 0 to 99)
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
     intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
     # get the hash of the token for session tracking
     h_token = hashlib.sha256(bytes(token, encoding="utf-8")).hexdigest()
@@ -150,7 +151,7 @@ def sign_csr(intermediate_id):
     request_body = require_json_request_body(client_ip)
     token = require_authorization_header(client_ip)
     # convert intermediate_id integer to a string
-    # ASSUMPTION! here and on nginx.conf, we have up to 100 CA (from 0 to 99)
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
     intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
     # get the hash of the token for session tracking
     h_token = hashlib.sha256(bytes(token, encoding="utf-8")).hexdigest()
@@ -420,6 +421,33 @@ def revoke(intermediate_id, serial_number):
     # return the unix revocation time
     return jsonify(revocation_time=rev_time_unix)
 
+
+@v1.route("/intermediate/<int:intermediate_id>/crl", methods=["GET"])
+def get_intermediate_crl(intermediate_id):
+    client_ip = extract_client_ip()
+    # convert intermediate_id integer to a string
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
+    intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
+
+    resp_tuple = make_request_to_vault(intermediate_id, "", RequestType.CRL)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    req = resp_tuple[0]
+    
+    # a log message for CloudWatch logs
+    log_msg = f"""{client_ip} used {request.path} API to get a CRL."
+                "HTK: -"
+                """
+    log("INFO", client_ip, request.path, log_msg)
+    
+    # return the certificate to the operator client
+    return {
+            'headers': { "Content-Type": "application/pkix-crl" },
+            'statusCode': 200,
+            'body': base64.b64encode(req.content).decode('utf-8'),
+            'isBase64Encoded': True
+        }
 
 @v1.route("/login", methods=["POST"])
 def login():
