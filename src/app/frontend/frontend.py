@@ -53,10 +53,10 @@ def list_intermediate(intermediate_id):
 
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
-    req = resp_tuple[0]
+    res = resp_tuple[0]
 
     try:
-        serial_numbers = req.json()["data"]["keys"]
+        serial_numbers = res.json()["data"]["keys"]
     except KeyError:
         error_msg = "Unexpected response from the backend."
         log_and_quit(client_ip, request.path, error_msg, ServiceUnavailable)
@@ -107,10 +107,10 @@ def get(intermediate_id, serial_number):
 
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
-    req = resp_tuple[0]
+    res = resp_tuple[0]
 
     try:
-        certificate = req.json()["data"]["certificate"]
+        certificate = res.json()["data"]["certificate"]
     except KeyError:
         error_msg = "Unexpected response from the backend."
         log_and_quit(client_ip, request.path, error_msg, ServiceUnavailable)
@@ -213,11 +213,11 @@ def sign_csr(intermediate_id):
 
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
-    req = resp_tuple[0]
+    res = resp_tuple[0]
 
     # everything good so far
     try:
-        response_body = req.json()
+        response_body = res.json()
         certificate = response_body["data"]["certificate"]
         serial_number = response_body["data"]["serial_number"]
     except KeyError:
@@ -432,7 +432,7 @@ def get_intermediate_crl(intermediate_id):
 
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
-    req = resp_tuple[0]
+    res = resp_tuple[0]
     
     # a log message for CloudWatch logs
     log_msg = f"""{client_ip} used {request.path} API to get a CRL."
@@ -443,14 +443,47 @@ def get_intermediate_crl(intermediate_id):
     #These headers must be recalculated
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
     headers          = [
-        (k,v) for k,v in req.raw.headers.items()
+        (k,v) for k,v in res.raw.headers.items()
         if k.lower() not in excluded_headers
     ]
 
     headers.append(("isBase64Encoded", True))
 
-    response = Response(req.content, req.status_code, headers)
+    response = Response(res.content, res.status_code, headers)
     return response
+
+@v1.route("/intermediate/<int:intermediate_id>/ca", methods=["GET"])
+def get_intermediate_ca(intermediate_id):
+    client_ip = extract_client_ip()
+    # convert intermediate_id integer to a string
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
+    intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
+
+    resp_tuple = make_request_to_vault(intermediate_id, "", RequestType.CA)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    res = resp_tuple[0]
+    
+    # a log message for CloudWatch logs
+    log_msg = f"""{client_ip} used {request.path} API to get a CA."
+                "HTK: -"
+                """
+    log("INFO", client_ip, request.path, log_msg)
+
+
+    #These headers must be recalculated
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers          = [
+        (k,v) for k,v in res.raw.headers.items()
+        if k.lower() not in excluded_headers
+    ]
+ 
+    headers.append(("isBase64Encoded", True))
+ 
+    response = Response(res.content, res.status_code, headers)
+    return response
+
 
 @v1.route("/login", methods=["POST"])
 def login():
@@ -473,11 +506,11 @@ def login():
 
     if not resp_tuple[0]:
         log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
-    req = resp_tuple[0]
+    res = resp_tuple[0]
    
     # everything good so far (200 OK), attempt to parse the response
     try:
-        response_body = req.json()
+        response_body = res.json()
         org = response_body["auth"]["metadata"]["org"]
         username = response_body["auth"]["metadata"]["username"]
         token = response_body["auth"]["client_token"]

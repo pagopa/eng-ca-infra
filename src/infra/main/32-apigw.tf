@@ -289,6 +289,47 @@ resource "aws_api_gateway_integration_response" "crl" {
 }
 #endregion
 
+### .../Ca
+#region
+# /intermediate/{intermediate_id}/ca
+resource "aws_api_gateway_resource" "ca" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_resource.intermediate_param_path.id
+  path_part   = var.apigw_ca_path
+}
+
+resource "aws_api_gateway_method" "ca" {
+  authorization = "NONE"
+  http_method   = "GET"
+  resource_id   = aws_api_gateway_resource.ca.id
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+}
+
+resource "aws_api_gateway_method_response" "ca" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.ca.id
+  http_method = aws_api_gateway_method.ca.http_method
+  status_code = "200"
+}
+
+resource "aws_api_gateway_integration" "ca" {
+  http_method             = aws_api_gateway_method.ca.http_method
+  integration_http_method = "POST"
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  resource_id             = aws_api_gateway_resource.ca.id
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.lambda_ca.invoke_arn
+}
+
+resource "aws_api_gateway_integration_response" "ca" {
+  depends_on  = [aws_api_gateway_integration.ca]
+  http_method = aws_api_gateway_method.ca.http_method
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.ca.id
+  status_code = aws_api_gateway_method_response.ca.status_code
+}
+#endregion
+
 # Login
 #region
 
@@ -356,14 +397,17 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_resource.list.*,
       aws_api_gateway_resource.get_revoke.*,
       aws_api_gateway_resource.sign_csr.*,
-      aws_api_gateway_resource.login.*,
       aws_api_gateway_resource.crl.*,
+      aws_api_gateway_resource.ca.*,
+      aws_api_gateway_resource.login.*,
+
 
       aws_api_gateway_method.list.*,
       aws_api_gateway_method.get.*,
       aws_api_gateway_method.sign_csr.*,
       aws_api_gateway_method.revoke.*,
       aws_api_gateway_method.crl.*,
+      aws_api_gateway_method.ca.*,
       aws_api_gateway_method.login.*,
 
       aws_api_gateway_method_response.list.*,
@@ -371,6 +415,7 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_method_response.sign_csr.*,
       aws_api_gateway_method_response.revoke.*,
       aws_api_gateway_method_response.crl.*,
+      aws_api_gateway_method_response.ca.*,
       aws_api_gateway_method_response.login.*,
 
       aws_api_gateway_integration.list.*,
@@ -378,6 +423,7 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_integration.sign_csr.*,
       aws_api_gateway_integration.revoke.*,
       aws_api_gateway_integration.crl.*,
+      aws_api_gateway_integration.ca.*,
       aws_api_gateway_integration.login.*,
 
       aws_api_gateway_integration_response.list.*,
@@ -385,6 +431,7 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_integration_response.sign_csr.*,
       aws_api_gateway_integration_response.revoke.*,
       aws_api_gateway_integration_response.crl.*,
+      aws_api_gateway_integration_response.ca.*,
       aws_api_gateway_integration_response.login.*
 
     ]))

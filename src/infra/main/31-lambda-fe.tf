@@ -72,6 +72,7 @@ resource "aws_lambda_function" "lambda_ca" {
       VAULT_SIGN_PATH   = var.vault_sign_path
       VAULT_REVOKE_PATH = var.vault_revoke_path
       VAULT_CRL_PATH    = var.vault_crl_path
+      VAULT_CA_PATH     = var.vault_ca_path
       VAULT_LOGIN_PATH  = var.vault_login_path
     }
   }
@@ -130,6 +131,14 @@ resource "aws_lambda_permission" "crl" {
   function_name = aws_lambda_function.lambda_ca.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.crl.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_crl_path}"
+}
+
+#arn/<stage_name>/<crl.http_method>/intermediate/{intermediate_id}/ca
+resource "aws_lambda_permission" "ca" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_ca.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.ca.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_ca_path}"
 }
 
 #arn/<stage_name>/<sign_csr.http_method>/login
