@@ -154,6 +154,11 @@ variable "apigw_crl_path" {
   default = "crl"
 }
 
+variable "apigw_ca_path" {
+  type    = string
+  default = "ca"
+}
+
 variable "apigw_login_path" {
   type    = string
   default = "login"
@@ -200,6 +205,11 @@ variable "vault_revoke_path" {
 variable "vault_crl_path" {
   type    = string
   default = "/v1/intermediate-{}/crl"
+}
+
+variable "vault_ca_path" {
+  type    = string
+  default = "/v1/intermediate-{}/ca"
 }
 
 variable "vault_login_path" {

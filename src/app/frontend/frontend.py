@@ -452,6 +452,39 @@ def get_intermediate_crl(intermediate_id):
     response = Response(req.content, req.status_code, headers)
     return response
 
+@v1.route("/intermediate/<int:intermediate_id>/ca", methods=["GET"])
+def get_intermediate_ca(intermediate_id):
+    client_ip = extract_client_ip()
+    # convert intermediate_id integer to a string
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
+    intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
+
+    resp_tuple = make_request_to_vault(intermediate_id, "", RequestType.CA)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    req = resp_tuple[0]
+    
+    # a log message for CloudWatch logs
+    log_msg = f"""{client_ip} used {request.path} API to get a CA."
+                "HTK: -"
+                """
+    log("INFO", client_ip, request.path, log_msg)
+
+
+    #These headers must be recalculated
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers          = [
+        (k,v) for k,v in req.raw.headers.items()
+        if k.lower() not in excluded_headers
+    ]
+ 
+    headers.append(("isBase64Encoded", True))
+ 
+    response = Response(req.content, req.status_code, headers)
+    return response
+
+
 @v1.route("/login", methods=["POST"])
 def login():
     client_ip = extract_client_ip()
