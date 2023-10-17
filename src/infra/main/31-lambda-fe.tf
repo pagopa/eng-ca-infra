@@ -32,9 +32,9 @@ data "archive_file" "lambda" {
   source_dir  = "${local.relative_path_app}/"
   output_path = "${local.full_path_root_project}/frontend.zip"
   excludes = [
-    "expiring-cert-checker/",
-    "notifications-handler/",
-    "tests/",
+    "expiring-cert-checker",
+    "notifications-handler",
+    "tests",
     "requirements.txt",
     "requirements-dev.txt"
   ]

@@ -7,6 +7,8 @@ resource "aws_api_gateway_rest_api" "this" {
   }
   disable_execute_api_endpoint = false #TODO change this
 
+  binary_media_types = ["*/*"]
+
 }
 
 ##
@@ -267,14 +269,6 @@ resource "aws_api_gateway_method_response" "crl" {
   resource_id = aws_api_gateway_resource.crl.id
   http_method = aws_api_gateway_method.crl.http_method
   status_code = "200"
-  response_parameters = {
-    "method.response.header.Content-Type" = true,
-  }
-
-  response_models = {
-    "application/pkix-crl" = "Empty"
-  }
-
 }
 
 resource "aws_api_gateway_integration" "crl" {
@@ -292,11 +286,6 @@ resource "aws_api_gateway_integration_response" "crl" {
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = aws_api_gateway_resource.crl.id
   status_code = aws_api_gateway_method_response.crl.status_code
-
-  response_templates = {
-    "application/pkix-crl" = ""
-  }
-
 }
 #endregion
 

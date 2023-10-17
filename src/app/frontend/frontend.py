@@ -1,4 +1,3 @@
-import base64
 import datetime
 import hashlib
 import json
@@ -11,7 +10,7 @@ from cryptography.x509.extensions import ExtensionNotFound as X509ExtensionNotFo
 from cryptography.x509.oid import ExtensionOID as X509ExtensionOID
 from cryptography.x509.oid import NameOID as X509NameOID
 from email_validator import EmailNotValidError, validate_email
-from flask import Blueprint, escape, jsonify, request
+from flask import Blueprint, Response, escape, jsonify, request
 from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 from .utils.config import Config, RequestType
@@ -440,14 +439,18 @@ def get_intermediate_crl(intermediate_id):
                 "HTK: -"
                 """
     log("INFO", client_ip, request.path, log_msg)
-    
-    # return the certificate to the operator client
-    return {
-            'headers': { "Content-Type": "application/pkix-crl" },
-            'statusCode': 200,
-            'body': base64.b64encode(req.content).decode('utf-8'),
-            'isBase64Encoded': True
-        }
+
+    #These headers must be recalculated
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers          = [
+        (k,v) for k,v in req.raw.headers.items()
+        if k.lower() not in excluded_headers
+    ]
+
+    headers.append(("isBase64Encoded", True))
+
+    response = Response(req.content, req.status_code, headers)
+    return response
 
 @v1.route("/login", methods=["POST"])
 def login():
