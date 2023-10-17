@@ -32,9 +32,9 @@ data "archive_file" "lambda" {
   source_dir  = "${local.relative_path_app}/"
   output_path = "${local.full_path_root_project}/frontend.zip"
   excludes = [
-    "expiring-cert-checker/",
-    "notifications-handler/",
-    "tests/",
+    "expiring-cert-checker",
+    "notifications-handler",
+    "tests",
     "requirements.txt",
     "requirements-dev.txt"
   ]
@@ -68,10 +68,11 @@ resource "aws_lambda_function" "lambda_ca" {
       VAULT_0_ADDR      = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
       VAULT_1_ADDR      = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
       VAULT_LIST_PATH   = var.vault_list_path
-      VAULT_LOGIN_PATH  = var.vault_login_path
-      VAULT_SIGN_PATH   = var.vault_sign_path
       VAULT_READ_PATH   = var.vault_read_path
+      VAULT_SIGN_PATH   = var.vault_sign_path
       VAULT_REVOKE_PATH = var.vault_revoke_path
+      VAULT_CRL_PATH    = var.vault_crl_path
+      VAULT_LOGIN_PATH  = var.vault_login_path
     }
   }
 
@@ -123,6 +124,14 @@ resource "aws_lambda_permission" "sign_csr" {
   source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.sign_csr.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_sign_path}"
 }
 
+#arn/<stage_name>/<crl.http_method>/intermediate/{intermediate_id}/crl
+resource "aws_lambda_permission" "crl" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_ca.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.crl.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_crl_path}"
+}
+
 #arn/<stage_name>/<sign_csr.http_method>/login
 resource "aws_lambda_permission" "login" {
   action        = "lambda:InvokeFunction"
@@ -136,7 +145,6 @@ resource "aws_lambda_permission" "login" {
 #---------------------------
 # Cloudwatch log group
 #---------------------------
-#TODO remember to modify those in packer/cw-config.json! ugly, but packer comes first than cloud-init (still valid (?)).
 resource "aws_cloudwatch_log_group" "frontend_application_log" {
   name              = "/lambda/${aws_lambda_function.lambda_ca.function_name}"
   retention_in_days = 90

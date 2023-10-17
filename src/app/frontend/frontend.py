@@ -10,7 +10,7 @@ from cryptography.x509.extensions import ExtensionNotFound as X509ExtensionNotFo
 from cryptography.x509.oid import ExtensionOID as X509ExtensionOID
 from cryptography.x509.oid import NameOID as X509NameOID
 from email_validator import EmailNotValidError, validate_email
-from flask import Blueprint, escape, jsonify, request
+from flask import Blueprint, Response, escape, jsonify, request
 from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 from .utils.config import Config, RequestType
@@ -44,7 +44,7 @@ def list_intermediate(intermediate_id):
     client_ip = extract_client_ip()
     token = require_authorization_header(client_ip)
     # convert intermediate_id integer to a string
-    # ASSUMPTION! here and on nginx.conf, we have up to 100 CA (from 0 to 99)
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
     intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
     # get the hash of the token for session tracking
     h_token = hashlib.sha256(bytes(token, encoding="utf-8")).hexdigest()
@@ -94,7 +94,7 @@ def get(intermediate_id, serial_number):
     client_ip = extract_client_ip()
     token = require_authorization_header(client_ip)
     # convert intermediate_id integer to a string
-    # ASSUMPTION! here and on nginx.conf, we have up to 100 CA (from 0 to 99)
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
     intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
     # get the hash of the token for session tracking
     h_token = hashlib.sha256(bytes(token, encoding="utf-8")).hexdigest()
@@ -150,7 +150,7 @@ def sign_csr(intermediate_id):
     request_body = require_json_request_body(client_ip)
     token = require_authorization_header(client_ip)
     # convert intermediate_id integer to a string
-    # ASSUMPTION! here and on nginx.conf, we have up to 100 CA (from 0 to 99)
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
     intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
     # get the hash of the token for session tracking
     h_token = hashlib.sha256(bytes(token, encoding="utf-8")).hexdigest()
@@ -420,6 +420,37 @@ def revoke(intermediate_id, serial_number):
     # return the unix revocation time
     return jsonify(revocation_time=rev_time_unix)
 
+
+@v1.route("/intermediate/<int:intermediate_id>/crl", methods=["GET"])
+def get_intermediate_crl(intermediate_id):
+    client_ip = extract_client_ip()
+    # convert intermediate_id integer to a string
+    # ASSUMPTION! here we have up to 100 CA (from 0 to 99)
+    intermediate_id = str(intermediate_id).zfill(2)  # 2 -> "02"
+
+    resp_tuple = make_request_to_vault(intermediate_id, "", RequestType.CRL)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    req = resp_tuple[0]
+    
+    # a log message for CloudWatch logs
+    log_msg = f"""{client_ip} used {request.path} API to get a CRL."
+                "HTK: -"
+                """
+    log("INFO", client_ip, request.path, log_msg)
+
+    #These headers must be recalculated
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers          = [
+        (k,v) for k,v in req.raw.headers.items()
+        if k.lower() not in excluded_headers
+    ]
+
+    headers.append(("isBase64Encoded", True))
+
+    response = Response(req.content, req.status_code, headers)
+    return response
 
 @v1.route("/login", methods=["POST"])
 def login():

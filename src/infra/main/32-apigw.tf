@@ -7,12 +7,14 @@ resource "aws_api_gateway_rest_api" "this" {
   }
   disable_execute_api_endpoint = false #TODO change this
 
+  binary_media_types = ["*/*"]
+
 }
 
 ##
 ## Route53
 ##
-# region
+#region
 resource "aws_api_gateway_domain_name" "api" {
   count                    = data.external.get_ns_primary.result.nameservers == "" ? 0 : 1
   domain_name              = "${var.app_api_subdomain_name}.${var.app_primary_domain_name}"
@@ -56,7 +58,7 @@ resource "aws_api_gateway_resource" "intermediate" {
   rest_api_id = aws_api_gateway_rest_api.this.id
 }
 
-# /intermediate/{intermediate_id}
+## /intermediate/{intermediate_id}
 resource "aws_api_gateway_resource" "intermediate_param_path" {
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_resource.intermediate.id
@@ -64,7 +66,7 @@ resource "aws_api_gateway_resource" "intermediate_param_path" {
 }
 
 
-### List 
+### .../List 
 #region
 
 # /intermediate/{intermediate_id}/certificates
@@ -105,14 +107,13 @@ resource "aws_api_gateway_integration_response" "list" {
   status_code = aws_api_gateway_method_response.list.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 
 #endregion
 
-### Get
+### .../Get
 #region
 
 # /intermediate/{intermediate_id}/certificate/{serial_number}
@@ -153,15 +154,14 @@ resource "aws_api_gateway_integration_response" "get" {
   status_code = aws_api_gateway_method_response.get.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 
 #endregion
 
 
-### Revoke
+### .../Revoke
 #region
 
 resource "aws_api_gateway_method" "revoke" {
@@ -195,14 +195,13 @@ resource "aws_api_gateway_integration_response" "revoke" {
   status_code = aws_api_gateway_method_response.revoke.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 
 #endregion
 
-### Sign CSR
+### .../Sign CSR
 #region
 
 # /intermediate/{intermediate_id}/certificate
@@ -243,15 +242,54 @@ resource "aws_api_gateway_integration_response" "sign_csr" {
   status_code = aws_api_gateway_method_response.sign_csr.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 
 #endregion
 
+### .../Crl
+#region
+# /intermediate/{intermediate_id}/crl
+resource "aws_api_gateway_resource" "crl" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_resource.intermediate_param_path.id
+  path_part   = var.apigw_crl_path
+}
 
-### Login
+resource "aws_api_gateway_method" "crl" {
+  authorization = "NONE"
+  http_method   = "GET"
+  resource_id   = aws_api_gateway_resource.crl.id
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+}
+
+resource "aws_api_gateway_method_response" "crl" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.crl.id
+  http_method = aws_api_gateway_method.crl.http_method
+  status_code = "200"
+}
+
+resource "aws_api_gateway_integration" "crl" {
+  http_method             = aws_api_gateway_method.crl.http_method
+  integration_http_method = "POST"
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  resource_id             = aws_api_gateway_resource.crl.id
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.lambda_ca.invoke_arn
+}
+
+resource "aws_api_gateway_integration_response" "crl" {
+  depends_on  = [aws_api_gateway_integration.crl]
+  http_method = aws_api_gateway_method.crl.http_method
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.crl.id
+  status_code = aws_api_gateway_method_response.crl.status_code
+}
+#endregion
+
+# Login
 #region
 
 # login
@@ -292,8 +330,7 @@ resource "aws_api_gateway_integration_response" "login" {
   status_code = aws_api_gateway_method_response.login.status_code
 
   response_templates = {
-    "application/json" = "",
-    "application/xml"  = ""
+    "application/json" = ""
   }
 }
 
@@ -320,29 +357,34 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_resource.get_revoke.*,
       aws_api_gateway_resource.sign_csr.*,
       aws_api_gateway_resource.login.*,
+      aws_api_gateway_resource.crl.*,
 
       aws_api_gateway_method.list.*,
       aws_api_gateway_method.get.*,
       aws_api_gateway_method.sign_csr.*,
       aws_api_gateway_method.revoke.*,
+      aws_api_gateway_method.crl.*,
       aws_api_gateway_method.login.*,
 
       aws_api_gateway_method_response.list.*,
       aws_api_gateway_method_response.get.*,
       aws_api_gateway_method_response.sign_csr.*,
       aws_api_gateway_method_response.revoke.*,
+      aws_api_gateway_method_response.crl.*,
       aws_api_gateway_method_response.login.*,
 
       aws_api_gateway_integration.list.*,
       aws_api_gateway_integration.get.*,
       aws_api_gateway_integration.sign_csr.*,
       aws_api_gateway_integration.revoke.*,
+      aws_api_gateway_integration.crl.*,
       aws_api_gateway_integration.login.*,
 
       aws_api_gateway_integration_response.list.*,
       aws_api_gateway_integration_response.get.*,
       aws_api_gateway_integration_response.sign_csr.*,
       aws_api_gateway_integration_response.revoke.*,
+      aws_api_gateway_integration_response.crl.*,
       aws_api_gateway_integration_response.login.*
 
     ]))

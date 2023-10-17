@@ -323,6 +323,41 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
             return resp, None, ""
             #endregion
 
+        elif request_type == RequestType.CRL:
+            #region
+            backend_endpoint = url_encode_fix(
+                (
+                    f'{vault_addr}'
+                    f'{Config.get_env("VAULT_CRL_PATH").format(intermediate_id)}'
+                )
+            )
+
+            try:
+                resp = http_client.get(
+                    backend_endpoint,
+                    # INTERNAL_TIMEOUT as no external endpoints are called
+                    timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
+                )
+
+            except http_client.exceptions.RequestException:
+                # Invalidate vault variables for the next for iteration
+                invalidate_vault_address()
+                continue
+
+            # If the node responses with a 307 status code
+            # then it's not the active one, it's time to
+            # refresh the value inside the variables related to the vault address
+            if resp.status_code == 307:
+                invalidate_vault_address()
+                continue
+            if resp.status_code != 200:
+                # likely because of an invalid token
+                return None, Forbidden, "Invalid authorization."
+
+            return resp, None, ""
+
+            #endregion
+
         elif request_type == RequestType.LOGIN:
             #region LOGIN
             backend_endpoint = url_encode_fix(
