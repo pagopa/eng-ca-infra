@@ -164,6 +164,11 @@ variable "apigw_login_path" {
   default = "login"
 }
 
+variable "apigw_root_ca_path" {
+  type    = string
+  default = "00"
+}
+
 #-------------------------
 # AWS Lambda
 #-------------------------
@@ -215,6 +220,16 @@ variable "vault_ca_path" {
 variable "vault_login_path" {
   type    = string
   default = "/v1/auth/github/login"
+}
+
+variable "vault_root_ca_path" {
+  type    = string
+  default = "/v1/pki/ca" #FIXME CHANGE WITH A DEFINITIVE VALUE
+}
+
+variable "vault_root_crl_path" {
+  type    = string
+  default = "/v1/pki/crl" #FIXME CHANGE WITH A DEFINITIVE VALUE
 }
 
 #-------------------------

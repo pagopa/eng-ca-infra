@@ -435,7 +435,7 @@ def get_intermediate_crl(intermediate_id):
     res = resp_tuple[0]
     
     # a log message for CloudWatch logs
-    log_msg = f"""{client_ip} used {request.path} API to get a CRL."
+    log_msg = f"""{client_ip} used {request.path} API to get an intermediate CRL."
                 "HTK: -"
                 """
     log("INFO", client_ip, request.path, log_msg)
@@ -451,6 +451,7 @@ def get_intermediate_crl(intermediate_id):
 
     response = Response(res.content, res.status_code, headers)
     return response
+
 
 @v1.route("/intermediate/<int:intermediate_id>/ca", methods=["GET"])
 def get_intermediate_ca(intermediate_id):
@@ -466,7 +467,7 @@ def get_intermediate_ca(intermediate_id):
     res = resp_tuple[0]
     
     # a log message for CloudWatch logs
-    log_msg = f"""{client_ip} used {request.path} API to get a CA."
+    log_msg = f"""{client_ip} used {request.path} API to get an intermediate CA."
                 "HTK: -"
                 """
     log("INFO", client_ip, request.path, log_msg)
@@ -484,6 +485,68 @@ def get_intermediate_ca(intermediate_id):
     response = Response(res.content, res.status_code, headers)
     return response
 
+
+@v1.route("/00/crl", methods=["GET"])
+def get_root_crl():
+    client_ip = extract_client_ip()
+    # ASSUMPTION! 00 is equivalent to root ca
+
+
+    resp_tuple = make_request_to_vault("", "", RequestType.CRL)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    res = resp_tuple[0]
+    
+    # a log message for CloudWatch logs
+    log_msg = f"""{client_ip} used {request.path} API to get root CRL."
+                "HTK: -"
+                """
+    log("INFO", client_ip, request.path, log_msg)
+
+    #These headers must be recalculated
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers          = [
+        (k,v) for k,v in res.raw.headers.items()
+        if k.lower() not in excluded_headers
+    ]
+
+    headers.append(("isBase64Encoded", True))
+
+    response = Response(res.content, res.status_code, headers)
+    return response
+
+
+@v1.route("/00/ca", methods=["GET"])
+def get_root_ca():
+    client_ip = extract_client_ip()
+
+    # ASSUMPTION! 00 is equivalent to root ca
+
+    resp_tuple = make_request_to_vault("", "", RequestType.CA)
+
+    if not resp_tuple[0]:
+        log_and_quit(client_ip, request.path, resp_tuple[2], resp_tuple[1])
+    res = resp_tuple[0]
+    
+    # a log message for CloudWatch logs
+    log_msg = f"""{client_ip} used {request.path} API to get root CA."
+                "HTK: -"
+                """
+    log("INFO", client_ip, request.path, log_msg)
+
+
+    #These headers must be recalculated
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers          = [
+        (k,v) for k,v in res.raw.headers.items()
+        if k.lower() not in excluded_headers
+    ]
+ 
+    headers.append(("isBase64Encoded", True))
+ 
+    response = Response(res.content, res.status_code, headers)
+    return response
 
 @v1.route("/login", methods=["POST"])
 def login():

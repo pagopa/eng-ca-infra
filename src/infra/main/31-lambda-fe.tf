@@ -1,6 +1,7 @@
 #---------------------------
 # AWS Lambda Function
 #---------------------------
+#region
 
 #Build app dependencies 
 # null_resource used for its field "triggers" 
@@ -65,15 +66,17 @@ resource "aws_lambda_function" "lambda_ca" {
   environment {
     variables = {
       #   AWS_SNS_TOPIC        = aws_sns_topic.notifications.arn #TODO insert when it's time
-      VAULT_0_ADDR      = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
-      VAULT_1_ADDR      = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
-      VAULT_LIST_PATH   = var.vault_list_path
-      VAULT_READ_PATH   = var.vault_read_path
-      VAULT_SIGN_PATH   = var.vault_sign_path
-      VAULT_REVOKE_PATH = var.vault_revoke_path
-      VAULT_CRL_PATH    = var.vault_crl_path
-      VAULT_CA_PATH     = var.vault_ca_path
-      VAULT_LOGIN_PATH  = var.vault_login_path
+      VAULT_0_ADDR        = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_1_ADDR        = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_LIST_PATH     = var.vault_list_path
+      VAULT_READ_PATH     = var.vault_read_path
+      VAULT_SIGN_PATH     = var.vault_sign_path
+      VAULT_REVOKE_PATH   = var.vault_revoke_path
+      VAULT_CRL_PATH      = var.vault_crl_path
+      VAULT_CA_PATH       = var.vault_ca_path
+      VAULT_LOGIN_PATH    = var.vault_login_path
+      VAULT_ROOT_CRL_PATH = var.vault_root_crl_path
+      VAULT_ROOT_CA_PATH  = var.vault_root_ca_path
     }
   }
 
@@ -90,14 +93,13 @@ resource "aws_lambda_function" "lambda_ca" {
   layers = [aws_lambda_layer_version.lambda_layer.arn]
 
 }
-
-
+#endregion
 
 
 #---------------------------
 # Invocation Permission
 #---------------------------
-
+#region
 
 #arn/<stage_name>/<list.http_method>/intermediate/{intermediate_id}/certificates
 resource "aws_lambda_permission" "list" {
@@ -126,19 +128,19 @@ resource "aws_lambda_permission" "sign_csr" {
 }
 
 #arn/<stage_name>/<crl.http_method>/intermediate/{intermediate_id}/crl
-resource "aws_lambda_permission" "crl" {
+resource "aws_lambda_permission" "int_crl" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_ca.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.crl.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_crl_path}"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.int_crl.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_crl_path}"
 }
 
 #arn/<stage_name>/<crl.http_method>/intermediate/{intermediate_id}/ca
-resource "aws_lambda_permission" "ca" {
+resource "aws_lambda_permission" "int_ca" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_ca.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.ca.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_ca_path}"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.int_ca.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_ca_path}"
 }
 
 #arn/<stage_name>/<sign_csr.http_method>/login
@@ -149,6 +151,23 @@ resource "aws_lambda_permission" "login" {
   source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.login.http_method}/${var.apigw_login_path}"
 
 }
+
+#arn/<stage_name>/<crl.http_method>/00/crl
+resource "aws_lambda_permission" "root_crl" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_ca.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.root_ca.http_method}/${var.apigw_root_ca_path}/${var.apigw_crl_path}"
+}
+
+#arn/<stage_name>/<crl.http_method>/00/ca
+resource "aws_lambda_permission" "root_ca" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_ca.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.root_ca.http_method}/${var.apigw_root_ca_path}/${var.apigw_ca_path}"
+}
+#endregion
 
 
 #---------------------------
@@ -163,7 +182,7 @@ resource "aws_cloudwatch_log_group" "frontend_application_log" {
 #---------------------------
 # IAM Roles & Policies
 #---------------------------
-#TODO replace with the same pattern present in 30-ecs.tf
+#region
 resource "aws_iam_role" "lambda_ca" {
   name               = "frontend_lambda"
   assume_role_policy = data.aws_iam_policy_document.frontend_lambda.json
@@ -269,3 +288,4 @@ data "aws_iam_policy_document" "ca_lambda_ssm" {
     ]
   }
 }
+#endregion

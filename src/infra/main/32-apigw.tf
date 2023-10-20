@@ -52,6 +52,7 @@ resource "aws_route53_record" "api" {
 #region
 
 # /intermediate
+#region
 resource "aws_api_gateway_resource" "intermediate" {
   parent_id   = aws_api_gateway_rest_api.this.root_resource_id
   path_part   = var.apigw_intermediate_path
@@ -251,83 +252,84 @@ resource "aws_api_gateway_integration_response" "sign_csr" {
 ### .../Crl
 #region
 # /intermediate/{intermediate_id}/crl
-resource "aws_api_gateway_resource" "crl" {
+resource "aws_api_gateway_resource" "int_crl" {
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_resource.intermediate_param_path.id
   path_part   = var.apigw_crl_path
 }
 
-resource "aws_api_gateway_method" "crl" {
+resource "aws_api_gateway_method" "int_crl" {
   authorization = "NONE"
   http_method   = "GET"
-  resource_id   = aws_api_gateway_resource.crl.id
+  resource_id   = aws_api_gateway_resource.int_crl.id
   rest_api_id   = aws_api_gateway_rest_api.this.id
 }
 
-resource "aws_api_gateway_method_response" "crl" {
+resource "aws_api_gateway_method_response" "int_crl" {
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.crl.id
-  http_method = aws_api_gateway_method.crl.http_method
+  resource_id = aws_api_gateway_resource.int_crl.id
+  http_method = aws_api_gateway_method.int_crl.http_method
   status_code = "200"
 }
 
-resource "aws_api_gateway_integration" "crl" {
-  http_method             = aws_api_gateway_method.crl.http_method
+resource "aws_api_gateway_integration" "int_crl" {
+  http_method             = aws_api_gateway_method.int_crl.http_method
   integration_http_method = "POST"
   rest_api_id             = aws_api_gateway_rest_api.this.id
-  resource_id             = aws_api_gateway_resource.crl.id
+  resource_id             = aws_api_gateway_resource.int_crl.id
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.lambda_ca.invoke_arn
 }
 
-resource "aws_api_gateway_integration_response" "crl" {
-  depends_on  = [aws_api_gateway_integration.crl]
-  http_method = aws_api_gateway_method.crl.http_method
+resource "aws_api_gateway_integration_response" "int_crl" {
+  depends_on  = [aws_api_gateway_integration.int_crl]
+  http_method = aws_api_gateway_method.int_crl.http_method
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.crl.id
-  status_code = aws_api_gateway_method_response.crl.status_code
+  resource_id = aws_api_gateway_resource.int_crl.id
+  status_code = aws_api_gateway_method_response.int_crl.status_code
 }
 #endregion
 
 ### .../Ca
 #region
 # /intermediate/{intermediate_id}/ca
-resource "aws_api_gateway_resource" "ca" {
+resource "aws_api_gateway_resource" "int_ca" {
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_resource.intermediate_param_path.id
   path_part   = var.apigw_ca_path
 }
 
-resource "aws_api_gateway_method" "ca" {
+resource "aws_api_gateway_method" "int_ca" {
   authorization = "NONE"
   http_method   = "GET"
-  resource_id   = aws_api_gateway_resource.ca.id
+  resource_id   = aws_api_gateway_resource.int_ca.id
   rest_api_id   = aws_api_gateway_rest_api.this.id
 }
 
-resource "aws_api_gateway_method_response" "ca" {
+resource "aws_api_gateway_method_response" "int_ca" {
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.ca.id
-  http_method = aws_api_gateway_method.ca.http_method
+  resource_id = aws_api_gateway_resource.int_ca.id
+  http_method = aws_api_gateway_method.int_ca.http_method
   status_code = "200"
 }
 
-resource "aws_api_gateway_integration" "ca" {
-  http_method             = aws_api_gateway_method.ca.http_method
+resource "aws_api_gateway_integration" "int_ca" {
+  http_method             = aws_api_gateway_method.int_ca.http_method
   integration_http_method = "POST"
   rest_api_id             = aws_api_gateway_rest_api.this.id
-  resource_id             = aws_api_gateway_resource.ca.id
+  resource_id             = aws_api_gateway_resource.int_ca.id
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.lambda_ca.invoke_arn
 }
 
-resource "aws_api_gateway_integration_response" "ca" {
-  depends_on  = [aws_api_gateway_integration.ca]
-  http_method = aws_api_gateway_method.ca.http_method
+resource "aws_api_gateway_integration_response" "int_ca" {
+  depends_on  = [aws_api_gateway_integration.int_ca]
+  http_method = aws_api_gateway_method.int_ca.http_method
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.ca.id
-  status_code = aws_api_gateway_method_response.ca.status_code
+  resource_id = aws_api_gateway_resource.int_ca.id
+  status_code = aws_api_gateway_method_response.int_ca.status_code
 }
+#endregion
 #endregion
 
 # Login
@@ -377,6 +379,100 @@ resource "aws_api_gateway_integration_response" "login" {
 
 #endregion
 
+## 00 (root_ca resource)
+#region
+resource "aws_api_gateway_resource" "ca" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_rest_api.this.root_resource_id
+  path_part   = var.apigw_root_ca_path
+}
+
+## 00/Crl
+#region
+
+# 00/crl
+resource "aws_api_gateway_resource" "root_crl" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_resource.ca.id
+  path_part   = var.apigw_crl_path
+}
+
+resource "aws_api_gateway_method" "root_crl" {
+  authorization = "NONE"
+  http_method   = "GET"
+  resource_id   = aws_api_gateway_resource.root_crl.id
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+}
+
+resource "aws_api_gateway_method_response" "root_crl" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_crl.id
+  http_method = aws_api_gateway_method.root_crl.http_method
+  status_code = "200"
+}
+
+resource "aws_api_gateway_integration" "root_crl" {
+  http_method             = aws_api_gateway_method.root_crl.http_method
+  integration_http_method = "POST"
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  resource_id             = aws_api_gateway_resource.root_crl.id
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.lambda_ca.invoke_arn
+}
+
+resource "aws_api_gateway_integration_response" "root_crl" {
+  depends_on  = [aws_api_gateway_integration.root_crl]
+  http_method = aws_api_gateway_method.root_crl.http_method
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_crl.id
+  status_code = aws_api_gateway_method_response.root_crl.status_code
+}
+#endregion
+
+## 00/Ca
+#region
+
+# 00/ca
+resource "aws_api_gateway_resource" "root_ca" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_resource.ca.id
+  path_part   = var.apigw_ca_path
+}
+
+resource "aws_api_gateway_method" "root_ca" {
+  authorization = "NONE"
+  http_method   = "GET"
+  resource_id   = aws_api_gateway_resource.root_ca.id
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+}
+
+resource "aws_api_gateway_method_response" "root_ca" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_ca.id
+  http_method = aws_api_gateway_method.root_ca.http_method
+  status_code = "200"
+}
+
+resource "aws_api_gateway_integration" "root_ca" {
+  http_method             = aws_api_gateway_method.root_ca.http_method
+  integration_http_method = "POST"
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  resource_id             = aws_api_gateway_resource.root_ca.id
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.lambda_ca.invoke_arn
+}
+
+resource "aws_api_gateway_integration_response" "root_ca" {
+  depends_on  = [aws_api_gateway_integration.root_ca]
+  http_method = aws_api_gateway_method.root_ca.http_method
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.root_ca.id
+  status_code = aws_api_gateway_method_response.root_ca.status_code
+}
+#endregion
+
+#endregion
+
 #endregion
 
 
@@ -397,8 +493,11 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_resource.list.*,
       aws_api_gateway_resource.get_revoke.*,
       aws_api_gateway_resource.sign_csr.*,
-      aws_api_gateway_resource.crl.*,
+      aws_api_gateway_resource.int_crl.*,
+      aws_api_gateway_resource.int_ca.*,
       aws_api_gateway_resource.ca.*,
+      aws_api_gateway_resource.root_crl.*,
+      aws_api_gateway_resource.root_ca.*,
       aws_api_gateway_resource.login.*,
 
 
@@ -406,32 +505,40 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_method.get.*,
       aws_api_gateway_method.sign_csr.*,
       aws_api_gateway_method.revoke.*,
-      aws_api_gateway_method.crl.*,
-      aws_api_gateway_method.ca.*,
+      aws_api_gateway_method.int_crl.*,
+      aws_api_gateway_method.int_ca.*,
+      aws_api_gateway_method.root_crl.*,
+      aws_api_gateway_method.root_ca.*,
       aws_api_gateway_method.login.*,
 
       aws_api_gateway_method_response.list.*,
       aws_api_gateway_method_response.get.*,
       aws_api_gateway_method_response.sign_csr.*,
       aws_api_gateway_method_response.revoke.*,
-      aws_api_gateway_method_response.crl.*,
-      aws_api_gateway_method_response.ca.*,
+      aws_api_gateway_method_response.int_crl.*,
+      aws_api_gateway_method_response.int_ca.*,
+      aws_api_gateway_method_response.root_crl.*,
+      aws_api_gateway_method_response.root_ca.*,
       aws_api_gateway_method_response.login.*,
 
       aws_api_gateway_integration.list.*,
       aws_api_gateway_integration.get.*,
       aws_api_gateway_integration.sign_csr.*,
       aws_api_gateway_integration.revoke.*,
-      aws_api_gateway_integration.crl.*,
-      aws_api_gateway_integration.ca.*,
+      aws_api_gateway_integration.int_crl.*,
+      aws_api_gateway_integration.int_ca.*,
+      aws_api_gateway_integration.root_crl.*,
+      aws_api_gateway_integration.root_ca.*,
       aws_api_gateway_integration.login.*,
 
       aws_api_gateway_integration_response.list.*,
       aws_api_gateway_integration_response.get.*,
       aws_api_gateway_integration_response.sign_csr.*,
       aws_api_gateway_integration_response.revoke.*,
-      aws_api_gateway_integration_response.crl.*,
-      aws_api_gateway_integration_response.ca.*,
+      aws_api_gateway_integration_response.int_crl.*,
+      aws_api_gateway_integration_response.int_ca.*,
+      aws_api_gateway_integration_response.root_crl.*,
+      aws_api_gateway_integration_response.root_ca.*,
       aws_api_gateway_integration_response.login.*
 
     ]))
