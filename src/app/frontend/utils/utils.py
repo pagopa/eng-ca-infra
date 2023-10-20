@@ -6,7 +6,7 @@ import boto3
 import botocore.client
 import requests as http_client
 from flask import Request, current_app, request
-from werkzeug.exceptions import BadRequest, Forbidden, ServiceUnavailable, Unauthorized
+from werkzeug.exceptions import BadRequest, Forbidden, Unauthorized
 from werkzeug.urls import url_fix as url_encode_fix
 
 from .aws_helper import AWSHelper
@@ -186,8 +186,7 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
             else:
                 raise ConnectionError("Max retry attempts exceeded when trying \
                                     to find the correct Vault address")
-
-        except Exception as ex:
+        except Exception:
             invalidate_vault_address()
             return None , ConnectionError , "Max retry attempts to find Vault address reached"
 
@@ -325,12 +324,27 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
 
         elif request_type == RequestType.CRL:
             #region
-            backend_endpoint = url_encode_fix(
-                (
-                    f'{vault_addr}'
-                    f'{Config.get_env("VAULT_CRL_PATH").format(intermediate_id)}'
+
+            backend_endpoint = ""
+
+            # If the intermediate parameter is not set, then the backend endpoint
+            # is configured to call the root crl endpoint
+            if not intermediate_id and len(intermediate_id.strip()) == 0:
+                ## root crl
+                backend_endpoint = url_encode_fix(
+                    (
+                        f'{vault_addr}'
+                        f'{Config.get_env("VAULT_ROOT_CRL_PATH")}'
+                    )
                 )
-            )
+            else:
+                # intermediate crl
+                backend_endpoint = url_encode_fix(
+                    (
+                        f'{vault_addr}'
+                        f'{Config.get_env("VAULT_CRL_PATH").format(intermediate_id)}'
+                    )
+                )
 
             try:
                 resp = http_client.get(
@@ -350,6 +364,8 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
             if resp.status_code == 307:
                 invalidate_vault_address()
                 continue
+            if resp.status_code == 204:
+                return resp, None, ""
             if resp.status_code != 200:
                 # likely because of an invalid token
                 return None, Forbidden, "Invalid authorization."
@@ -360,12 +376,27 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
 
         elif request_type == RequestType.CA:
             #region
-            backend_endpoint = url_encode_fix(
-                (
-                    f'{vault_addr}'
-                    f'{Config.get_env("VAULT_CA_PATH").format(intermediate_id)}'
+
+            backend_endpoint = ""
+
+            # If the intermediate parameter is not set, then the backend endpoint
+            # is configured to call the root ca endpoint
+            if not intermediate_id and len(intermediate_id.strip()) == 0:
+                #root ca
+                backend_endpoint = url_encode_fix(
+                    (
+                        f'{vault_addr}'
+                        f'{Config.get_env("VAULT_ROOT_CA_PATH")}'
+                    )
                 )
-            )
+            else:
+               # intermediate ca 
+                backend_endpoint = url_encode_fix(
+                    (
+                        f'{vault_addr}'
+                        f'{Config.get_env("VAULT_CA_PATH").format(intermediate_id)}'
+                    )
+                )
 
             try:
                 
@@ -374,7 +405,6 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
                     # INTERNAL_TIMEOUT as no external endpoints are called
                     timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
                 )
-
             except http_client.exceptions.RequestException:
                 # Invalidate vault variables for the next for iteration
                 invalidate_vault_address()
@@ -386,6 +416,8 @@ def make_request_to_vault(intermediate_id:str, token:str, request_type:RequestTy
             if resp.status_code == 307:
                 invalidate_vault_address()
                 continue
+            if resp.status_code == 204:
+                return resp , None , ""
             if resp.status_code != 200:
                 # likely because of an invalid token
                 return None, Forbidden, "Invalid authorization."
