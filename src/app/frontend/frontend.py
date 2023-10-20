@@ -485,7 +485,7 @@ def get_intermediate_ca(intermediate_id):
     response = Response(res.content, res.status_code, headers)
     return response
 
-#FIXME IMPLEMENT THIS
+
 @v1.route("/00/crl", methods=["GET"])
 def get_root_crl():
     client_ip = extract_client_ip()
@@ -516,7 +516,7 @@ def get_root_crl():
     response = Response(res.content, res.status_code, headers)
     return response
 
-#FIXME IMPLEMENT THIS
+
 @v1.route("/00/ca", methods=["GET"])
 def get_root_ca():
     client_ip = extract_client_ip()
