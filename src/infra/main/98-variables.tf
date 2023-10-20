@@ -224,12 +224,12 @@ variable "vault_login_path" {
 
 variable "vault_root_ca_path" {
   type    = string
-  default = "/v1/root/ca"
+  default = "/v1/pki/ca" #FIXME CHANGE WITH A DEFINITIVE VALUE
 }
 
 variable "vault_root_crl_path" {
   type    = string
-  default = "/v1/root/crl"
+  default = "/v1/pki/crl" #FIXME CHANGE WITH A DEFINITIVE VALUE
 }
 
 #-------------------------

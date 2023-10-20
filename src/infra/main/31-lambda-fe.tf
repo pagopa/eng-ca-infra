@@ -128,19 +128,19 @@ resource "aws_lambda_permission" "sign_csr" {
 }
 
 #arn/<stage_name>/<crl.http_method>/intermediate/{intermediate_id}/crl
-resource "aws_lambda_permission" "crl" {
+resource "aws_lambda_permission" "int_crl" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_ca.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.crl.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_crl_path}"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.int_crl.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_crl_path}"
 }
 
 #arn/<stage_name>/<crl.http_method>/intermediate/{intermediate_id}/ca
-resource "aws_lambda_permission" "ca" {
+resource "aws_lambda_permission" "int_ca" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_ca.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.ca.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_ca_path}"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/${var.apigw_stage_name}/${aws_api_gateway_method.int_ca.http_method}/${var.apigw_intermediate_path}/{${var.apigw_intermediate_param_path}}/${var.apigw_ca_path}"
 }
 
 #arn/<stage_name>/<sign_csr.http_method>/login
