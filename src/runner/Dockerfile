@@ -21,8 +21,8 @@ RUN GITHUB_RUNNER_VERSION="2.311.0" && \
     rm actions-runner-linux-x64-${GITHUB_RUNNER_VERSION}.tar.gz
 
 
-RUN ln -s /usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.1/libSystem.Security.Cryptography.Native.OpenSsl.so /usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.10/libSystem.Security.Cryptography.Native.OpenSsl.so && \
-    ln -s /usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.1/libSystem.Security.Cryptography.Native.OpenSsl.a /usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.10/libSystem.Security.Cryptography.Native.OpenSsl.a
+#RUN ln -s /usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.1/libSystem.Security.Cryptography.Native.OpenSsl.so /usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.10/libSystem.Security.Cryptography.Native.OpenSsl.so && \
+#    ln -s /usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.1/libSystem.Security.Cryptography.Native.OpenSsl.a /usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.10/libSystem.Security.Cryptography.Native.OpenSsl.a
 
 RUN	bash bin/installdependencies.sh
 
