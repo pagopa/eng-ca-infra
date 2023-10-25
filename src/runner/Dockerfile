@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y zip unzip jq ca-certificates curl apt-t
 RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb 
 
-RUN apt-get update && att-get install -y dotnet-runtime-3.1
+RUN apt-get update && att-get install -y dotnet-sdk-3.1
 
 # Create a folder
 RUN mkdir actions-runner
