@@ -14,7 +14,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg \
     build-essential \
     libssl-dev \
-    libffi-dev
+    libffi-dev \
+    libcurl4-openssl-dev \
+    libicu66
 
 #RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && \
 #    dpkg -i packages-microsoft-prod.deb && rm packages-microsoft-prod.deb 
