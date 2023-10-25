@@ -42,7 +42,7 @@ jobs:
           iam_role_arn: ${{ vars.IAM_ROLE }}
           ecs_cluster_name: ${{ vars.ECS_CLUSTER_NAME }}
           ecs_task_definition: ${{ vars.ECS_TASK_DEFINITION }}
-          ecs_container_name: github-runner
+          ecs_container_name: githubrunner
           ecs_task_subnet_id: ${{ vars.SUBNET_ID }}
           ecs_task_sec_group: ${{ vars.SEC_GROUP_ID }}
           pat_token: ${{ secrets.BOT_TOKEN }}
