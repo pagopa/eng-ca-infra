@@ -38,6 +38,12 @@ RUN GITHUB_RUNNER_VERSION="2.298.2" && \
 
 RUN	bash bin/installdependencies.sh
 
+RUN cd ./bin \
+   && for lib in $(find . -name 'System.*'); do \
+     toFile=$(echo "$lib" | sed -e 's/\.\/System\./.\/libSystem./g'); \
+     if ! [ -f $toFile ]; then ln -s $lib $toFile; fi; \
+  done
+
 RUN useradd github && \
     mkdir -p /home/github && \
     chown -R github:github /home/github && \
