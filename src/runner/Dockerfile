@@ -16,11 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     libffi-dev \
     sudo \
-    iputils-ping \
-    liblttng-ust0 \
-    libcurl4-openssl-dev \
-    libkrb5-3 \
-    libicu66 \
     rm -rf /var/lib/apt/lists/*
 
 #RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && \
