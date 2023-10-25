@@ -51,4 +51,4 @@ fi
 
 # Start the runner.
 printf "Executing GitHub Runner for $GITHUB_REPOSITORY\n"
-. /actions-runner/run.sh
+. /home/runner/run.sh
