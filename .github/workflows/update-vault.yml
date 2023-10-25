@@ -1,0 +1,86 @@
+name: Update Vault configs
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Repository tag to checkout (e.g. "v1.9.0")'
+        type: string
+        required: true
+      environment:
+        description: 'Which environment to update.'
+        type: choice
+        required: true
+        default: dev
+        options:
+          - dev
+          - prod
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  create_runner:
+    name: Create Self-Hosted Runner
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        index: [1, 2]
+      fail-fast: true
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Start GitHub Runner
+        id: start_runner
+        uses: ./.github/workflows/runner
+        with:
+          aws_region: ${{ vars.AWS_REGION }}
+          iam_role_arn: ${{ vars.IAM_ROLE }}
+          ecs_cluster_name: ${{ vars.ECS_CLUSTER_NAME }}
+          ecs_task_definition: ${{ vars.ECS_TASK_DEFINITION }}
+          ecs_container_name: github-runner
+          ecs_task_subnet_id: ${{ vars.SUBNET_ID }}
+          ecs_task_sec_group: ${{ vars.SEC_GROUP_ID }}
+          pat_token: ${{ secrets.BOT_TOKEN }}
+
+  test_job:
+    name: Test Job
+    needs: create_runner
+    runs-on: [self-hosted, "run_id:${{ github.run_id }}"]
+    environment: dev
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+          ref: refs/tags/${{ inputs.tag }}
+          persist-credentials: false
+
+      - name: 'Test aws cli'
+        run: |
+          aws s3 ls --region ${{ vars.AWS_REGION }}
+          kubectl get pods -n dev
+
+  delete_runner:
+    name: Delete Self-Hosted Runner
+    needs: [create_runner, test_job]
+    strategy:
+      matrix:
+        index: [1, 2]
+      fail-fast: true
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    environment: dev
+
+    steps:
+      - name: Stop Github Runner
+        id: stop_runner
+        uses: pagopa/interop-github-runner-aws-cleanup-action@main
+        with:
+          aws_region: ${{ vars.AWS_REGION }}
+          iam_role_arn: ${{ vars.ECS_IAM_ROLE_ARN }}
+          ecs_cluster_name: ${{ vars.ECS_CLUSTER_NAME }}
+          pat_token: ${{ secrets.BOT_TOKEN }}
