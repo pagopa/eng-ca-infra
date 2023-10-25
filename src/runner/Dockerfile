@@ -21,7 +21,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcurl4-openssl-dev \
     libkrb5-3 \
     libicu66 \
-    libssl1.1 && \
     rm -rf /var/lib/apt/lists/*
 
 #RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && \
