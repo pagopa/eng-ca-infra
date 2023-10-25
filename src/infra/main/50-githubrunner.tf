@@ -27,11 +27,12 @@ resource "aws_ecs_task_definition" "github_runner_def" {
   network_mode             = "awsvpc"
   cpu                      = 2048
   memory                   = 4096
+  # TODO
   container_definitions    = <<TASK_DEFINITION
 [
   {
     "name": "githubrunner",
-    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/github-runner:1",
+    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/github-runner:b338c7ba64a5362af2c81f1f915ffbbaab75c12f",
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
