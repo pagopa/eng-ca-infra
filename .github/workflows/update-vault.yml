@@ -3,10 +3,6 @@ name: Update Vault configs
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Repository tag to checkout (e.g. "v1.9.0")'
-        type: string
-        required: true
       environment:
         description: 'Which environment to update.'
         type: choice
@@ -31,15 +27,22 @@ jobs:
     environment: ${{ inputs.environment }}
 
     steps:
+    
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - name: Start GitHub Runner
         id: start_runner
         uses: ./.github/workflows/runner
         with:
           aws_region: ${{ vars.AWS_REGION }}
           iam_role_arn: ${{ vars.IAM_ROLE }}
-          ecs_cluster_name: ${{ vars.vault-ecs-cluster }}
+          ecs_cluster_name: ${{ vars.ECS_CLUSTER_NAME }}
           ecs_task_definition: ${{ vars.ECS_TASK_DEFINITION }}
-          ecs_container_name: github-runner
+          ecs_container_name: githubrunner
           ecs_task_subnet_id: ${{ vars.SUBNET_ID }}
           ecs_task_sec_group: ${{ vars.SEC_GROUP_ID }}
           pat_token: ${{ secrets.BOT_TOKEN }}
@@ -51,14 +54,6 @@ jobs:
     environment: dev
 
     steps:
-      - name: Checkout
-        id: checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-        with:
-          fetch-depth: 0
-          ref: refs/tags/${{ inputs.tag }}
-          persist-credentials: false
-
       - name: 'Test aws cli'
         run: |
           aws --version
