@@ -3,10 +3,6 @@ name: Update Vault configs
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Repository tag to checkout (e.g. "v1.9.0")'
-        type: string
-        required: true
       environment:
         description: 'Which environment to update.'
         type: choice
@@ -56,7 +52,6 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           fetch-depth: 0
-          ref: refs/tags/${{ inputs.tag }}
           persist-credentials: false
 
       - name: 'Test aws cli'
