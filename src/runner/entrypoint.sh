@@ -38,6 +38,8 @@ if [ "$(echo $REPLACE_EXISTING_RUNNER | tr '[:upper:]' '[:lower:]')" == "true" ]
 	REPLACEMENT_POLICY_LABEL="TRUE"
 fi
 
+
+
 # Configure runner interactively, or with the given replacement policy.
 printf "Configuring GitHub Runner for $GITHUB_REPOSITORY_BANNER\n"
 printf "\tRunner Name: $RUNNER_NAME\n\tWorking Directory: $WORK_DIR\n\tReplace Existing Runners: $REPLACEMENT_POLICY_LABEL\n"

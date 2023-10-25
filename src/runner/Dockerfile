@@ -2,7 +2,27 @@ FROM ubuntu:22.04@sha256:a8fe6fd30333dc60fc5306982a7c51385c2091af1e0ee887166b40a
 
 
 
-RUN apt-get update && apt-get install -y zip unzip jq ca-certificates curl apt-transport-https git lsb-release gnupg build-essential libssl-dev libffi-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    zip \
+    unzip \
+    jq \
+    ca-certificates \
+    curl \
+    apt-transport-https \
+    git \
+    lsb-release \
+    gnupg \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    sudo \
+    iputils-ping \
+    liblttng-ust0 \
+    libcurl4-openssl-dev \
+    libkrb5-3 \
+    libicu66 \
+    libssl1.1 && \
+    rm -rf /var/lib/apt/lists/*
 
 #RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && \
 #    dpkg -i packages-microsoft-prod.deb && rm packages-microsoft-prod.deb 
