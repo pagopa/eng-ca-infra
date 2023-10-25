@@ -32,7 +32,7 @@ resource "aws_ecs_task_definition" "github_runner_def" {
 [
   {
     "name": "githubrunner",
-    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/github-runner:43ef70ccd347003b1b2184da0571fdba9090b27e",
+    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/github-runner:bda287524fb2a878270384ac312553fa5cb0ffdb",
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
