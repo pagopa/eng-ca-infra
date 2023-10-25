@@ -37,7 +37,7 @@ jobs:
         with:
           aws_region: ${{ vars.AWS_REGION }}
           iam_role_arn: ${{ vars.IAM_ROLE }}
-          ecs_cluster_name: ${{ vars.ECS_CLUSTER_NAME }}
+          ecs_cluster_name: ${{ vars.vault-ecs-cluster }}
           ecs_task_definition: ${{ vars.ECS_TASK_DEFINITION }}
           ecs_container_name: github-runner
           ecs_task_subnet_id: ${{ vars.SUBNET_ID }}
@@ -61,8 +61,7 @@ jobs:
 
       - name: 'Test aws cli'
         run: |
-          aws s3 ls --region ${{ vars.AWS_REGION }}
-          kubectl get pods -n dev
+          aws --version
 
   delete_runner:
     name: Delete Self-Hosted Runner
