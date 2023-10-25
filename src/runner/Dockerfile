@@ -2,7 +2,7 @@ FROM ubuntu:22.04@sha256:a8fe6fd30333dc60fc5306982a7c51385c2091af1e0ee887166b40a
 
 
 
-RUN apt-get update && apt-get install -y zip unzip jq ca-certificates curl apt-transport-https git lsb-release gnupg wget libssl
+RUN apt-get update && apt-get install -y zip unzip jq ca-certificates curl apt-transport-https git lsb-release gnupg wget libssl1.1
 
 RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && rm packages-microsoft-prod.deb 
