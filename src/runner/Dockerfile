@@ -1,6 +1,6 @@
 FROM ubuntu:22.04@sha256:a8fe6fd30333dc60fc5306982a7c51385c2091af1e0ee887166b40a905691fd0
 
-RUN apt-get update && apt-get install -y zip unzip jq ca-certificates curl apt-transport-https git lsb-release gnupg
+RUN apt-get update && apt-get install -y zip unzip jq ca-certificates curl apt-transport-https git lsb-release gnupg dotnet-runtime-3.1 
 
 # Create a folder
 RUN mkdir actions-runner
@@ -12,6 +12,10 @@ RUN GITHUB_RUNNER_VERSION="2.311.0" && \
     echo "${GITHUB_RUNNER_VERSION_SHA}  actions-runner-linux-x64-${GITHUB_RUNNER_VERSION}.tar.gz" | sha256sum -c && \
     tar xzf ./actions-runner-linux-x64-${GITHUB_RUNNER_VERSION}.tar.gz && \
     rm actions-runner-linux-x64-${GITHUB_RUNNER_VERSION}.tar.gz
+
+
+RUN ln -s /usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.1/libSystem.Security.Cryptography.Native.OpenSsl.so /usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.10/libSystem.Security.Cryptography.Native.OpenSsl.so && \
+    ln -s /usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.1/libSystem.Security.Cryptography.Native.OpenSsl.a /usr/share/dotnet/shared/Microsoft.NETCore.App/3.1.10/libSystem.Security.Cryptography.Native.OpenSsl.a
 
 RUN	bash bin/installdependencies.sh
 
