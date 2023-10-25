@@ -40,7 +40,7 @@ jobs:
         with:
           aws_region: ${{ vars.AWS_REGION }}
           iam_role_arn: ${{ vars.IAM_ROLE }}
-          ecs_cluster_name: ${{ vars.vault-ecs-cluster }}
+          ecs_cluster_name: ${{ vars.ECS_CLUSTER_NAME }}
           ecs_task_definition: ${{ vars.ECS_TASK_DEFINITION }}
           ecs_container_name: github-runner
           ecs_task_subnet_id: ${{ vars.SUBNET_ID }}
