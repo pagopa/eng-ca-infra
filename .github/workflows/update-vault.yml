@@ -53,15 +53,15 @@ jobs:
     environment: dev
 
     steps:
-      # - name: Test runner
-      # id: install-aws-cli
-      # uses: unfor19/install-aws-cli-action@master
-      # with:
-      #   version: 2
-
-      - run: aws --version
+      - name: Test Aws cli command
+        run: aws dynamodb list-tables --no-paginate >> tmp.json && cat tmp.json
         shell: bash
 
+      - name: Run curl against Vault node
+        run: curl http://vault-0.vault.private:8200/v1/sys/health
+        shell: bash
+
+  #FIXME
   delete_runner:
     name: Delete Self-Hosted Runner
     needs: [create_runner, test_job]
@@ -79,6 +79,6 @@ jobs:
         uses: pagopa/interop-github-runner-aws-cleanup-action@main
         with:
           aws_region: ${{ vars.AWS_REGION }}
-          iam_role_arn: ${{ vars.ECS_IAM_ROLE_ARN }}
+          iam_role_arn: ${{ vars.IAM_ROLE }}
           ecs_cluster_name: ${{ vars.ECS_CLUSTER_NAME }}
           pat_token: ${{ secrets.BOT_TOKEN }}
