@@ -44,7 +44,7 @@ RUN curl -o awscliv2.sig "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.z
 
 RUN gpg --verify awscliv2.sig awscliv2.zip
 
-RUN unzip -q awscliv2.zip && ./aws/install
+RUN unzip -q awscliv2.zip && sudo ./aws/install
 RUN rm -rf "aws*"
 
 WORKDIR /home/runner
