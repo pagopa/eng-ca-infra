@@ -1,6 +1,6 @@
 FROM ghcr.io/actions/actions-runner:2.311.0
 
-RUN sudo apt-get update && sudo apt-get install -y zip unzip curl wget 
+RUN sudo apt-get update && sudo apt-get install -y zip unzip curl wget gnupg
 
 COPY --chmod=0755 entrypoint.sh ./entrypoint.sh
 
