@@ -58,7 +58,7 @@ jobs:
         shell: bash
 
       - name: Run curl against Vault node
-        run: curl http://vault-0.vault.private:8200/v1/sys/health
+        run: curl -v http://vault-0.vault.private:8200/v1/sys/health -m 10
         shell: bash
 
   #FIXME
