@@ -54,7 +54,7 @@ jobs:
 
     steps:
       - name: Test Aws cli command
-        run: aws dynamodb list-tables --no-paginate >> tmp.json && cat tmp.json
+        run: aws dynamodb scan --table-name vault-data --region eu-west-1 >> tmp.json && cat tmp.json && rm tmp.json
         shell: bash
 
       - name: Run curl against Vault node
