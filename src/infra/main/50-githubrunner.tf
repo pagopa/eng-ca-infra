@@ -69,3 +69,14 @@ resource "aws_security_group_rule" "github_runner_to_vault" {
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.vault.id
 }
+
+# needed to allow Github to create the Runner
+resource "aws_security_group_rule" "github_runner_to_internet" {
+  type              = "egress"
+  description       = "Internet access"
+  security_group_id = aws_security_group.github_runner.id
+  from_port         = 0
+  to_port           = 0
+  protocol          = "all"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
