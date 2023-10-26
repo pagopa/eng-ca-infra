@@ -42,6 +42,16 @@ resource "aws_security_group_rule" "vault_api_tcp" {
   source_security_group_id = aws_security_group.frontend.id
 }
 
+resource "aws_security_group_rule" "vault_github_runner" {
+  type                     = "ingress"
+  description              = "Vault Github Runner"
+  security_group_id        = aws_security_group.vault.id
+  from_port                = 8200
+  to_port                  = 8200
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.github_runner.id
+}
+
 resource "aws_security_group_rule" "egress_web" {
   type              = "egress"
   description       = "Internet access"
