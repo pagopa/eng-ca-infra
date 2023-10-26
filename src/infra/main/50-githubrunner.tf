@@ -32,7 +32,7 @@ resource "aws_ecs_task_definition" "github_runner_def" {
 [
   {
     "name": "githubrunner",
-    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/github-runner:6ded12b2697f37cb04ddf8bf17b434a63de587fb",
+    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/github-runner:75866b80359bf9bf88630071c751bfead1cb810f",
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
@@ -51,4 +51,21 @@ TASK_DEFINITION
     operating_system_family = "LINUX"
     cpu_architecture        = "X86_64"
   }
+}
+
+resource "aws_security_group" "github_runner" {
+  name        = "Github runner security group to reach Vault"
+  vpc_id      = module.vpc.vpc_id
+  description = "Security group for GitHub to reach Vault"
+}
+
+
+resource "aws_security_group_rule" "github_runner_to_vault" {
+  type                     = "egress"
+  description              = "Github runner rule to reach Vault"
+  security_group_id        = aws_security_group.github_runner.id
+  from_port                = 0
+  to_port                  = 8200
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.vault.id
 }
