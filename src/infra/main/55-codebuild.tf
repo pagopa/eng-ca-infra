@@ -4,18 +4,9 @@ locals {
 
 resource "aws_security_group" "codebuild_security_group" {
   name        = "codebuild-security-group"
-  description = "Security group for CodeBuild"
+  description = "Security group for CodeBuild."
 
-  vpc_id = "your_vpc_id" # Replace with your VPC ID
-
-  // Inbound rules
-  // Example: Allow HTTP (port 80) access from anywhere
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  vpc_id = module.vpc.vpc_id
 
   // Outbound rules
   // Example: Allow all outbound traffic
@@ -40,7 +31,38 @@ module "codebuild" {
   vpc_config = {
     vpc_id             = module.vpc.vpc_id
     subnets            = module.vpc.private_subnets
-    security_group_ids = ["sg-003ca1613e8b3d445"] #TODO
+    security_group_ids = [aws_security_group.codebuild_security_group.id]
   }
 
 }
+
+data "aws_iam_policy_document" "terraform" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    # TODO: reference the remote state.
+    resources = [
+      "arn:aws:s3:::ca-eng-dev-tfstate-927384502041",
+      "arn:aws:s3:::ca-eng-dev-tfstate-927384502041/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "terraform" {
+  name        = "${local.project}-terraform-policy"
+  description = "Policy that allows terraform to interact with the remote state."
+  policy      = data.aws_iam_policy_document.terraform.json
+}
+
+resource "aws_iam_role_policy_attachment" "terraform" {
+  role       = module.codebuild.role_name
+  policy_arn = aws_iam_policy.terraform.arn
+}
+
+

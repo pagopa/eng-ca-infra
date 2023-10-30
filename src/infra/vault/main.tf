@@ -11,11 +11,11 @@ terraform {
   }
   backend "s3" {
     # managed outside tf
-    bucket  = "ca-secops-pagopa-it-vault-config-state"
+    bucket  = "ca-eng-dev-tfstate-927384502041"
     key     = "vault/terraform.tfstate"
     encrypt = true
     # managed outside tf
-    dynamodb_table = "ca-secops-pagopa-it-vault-config-lock-table"
+    dynamodb_table = "ca-eng-dev-tfstate-lock-295382553089"
     region         = "eu-west-1"
   }
 }
