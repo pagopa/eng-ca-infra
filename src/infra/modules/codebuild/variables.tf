@@ -10,8 +10,12 @@ variable "github_repository_url" {
 
 variable "environment_variables" {
   description = "Map of environment variables to set in the CodeBuild project"
-  type        = map(string)
-  default     = {}
+  type = list(object({
+    name  = string
+    value = string
+    type  = string
+  }))
+  default = []
 }
 
 variable "log_group_name" {

@@ -34,7 +34,17 @@ module "codebuild" {
     security_group_ids = [aws_security_group.codebuild_security_group.id]
   }
 
+  environment_variables = [
+    {
+      name  = "VAULT_TOKEN"
+      value = "/CodeBuild/vault_token"
+      type  = "PARAMETER_STORE"
+    },
+  ]
+
+
 }
+
 
 data "aws_iam_policy_document" "terraform" {
   statement {
@@ -50,6 +60,30 @@ data "aws_iam_policy_document" "terraform" {
     resources = [
       "arn:aws:s3:::ca-eng-dev-tfstate-927384502041",
       "arn:aws:s3:::ca-eng-dev-tfstate-927384502041/*"
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:PutItem",
+      "dynamodb:GetItem",
+      "dynamodb:DeleteItem",
+    ]
+    # TODO: reference the remote state.
+    resources = [
+      "arn:aws:dynamodb:eu-west-1:793355522647:table/ca-eng-dev-tfstate-lock-295382553089",
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter"
+    ]
+    resources = [
+      "arn:aws:ssm:eu-west-1:793355522647:parameter/ca.secops-crl_renewer_password"
     ]
   }
 }

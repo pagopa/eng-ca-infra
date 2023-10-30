@@ -136,12 +136,12 @@ resource "aws_codebuild_project" "main" {
     privileged_mode             = true
 
     dynamic "environment_variable" {
-      for_each = var.environment_variables
+      for_each = { for e in var.environment_variables : e.name => e }
       iterator = e
       content {
         name  = e.key
         value = e.value.value
-        type  = e.type
+        type  = e.value.type
       }
     }
   }
