@@ -13,11 +13,14 @@ phases:
   pre_build:
     commands:
       - echo Entered the pre_build phase...
+      - cd src/infra/vault
+      - terraform init
     finally:
       - echo This always runs even if the login command fails
   build:
     commands:
       - echo Entered the build phase...
+      - terraform plan
     finally:
       - echo This always runs even if the install command fails
   post_build:
