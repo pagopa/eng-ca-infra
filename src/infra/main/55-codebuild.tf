@@ -37,7 +37,7 @@ module "codebuild" {
   environment_variables = [
     {
       name  = "VAULT_TOKEN"
-      value = "/CodeBuild/vault_token"
+      value = "vault_token"
       type  = "PARAMETER_STORE"
     },
   ]
@@ -80,10 +80,12 @@ data "aws_iam_policy_document" "terraform" {
   statement {
     effect = "Allow"
     actions = [
-      "ssm:GetParameter"
+      "ssm:GetParameter",
+      "ssm:GetParameters"
     ]
     resources = [
-      "arn:aws:ssm:eu-west-1:793355522647:parameter/ca.secops-crl_renewer_password"
+      "arn:aws:ssm:eu-west-1:${data.aws_caller_identity.current.account_id}:parameter/ca.secops-crl_renewer_password",
+      "arn:aws:ssm:eu-west-1:${data.aws_caller_identity.current.account_id}:parameter/vault_token"
     ]
   }
 }
@@ -98,5 +100,3 @@ resource "aws_iam_role_policy_attachment" "terraform" {
   role       = module.codebuild.role_name
   policy_arn = aws_iam_policy.terraform.arn
 }
-
-

@@ -8,7 +8,7 @@ output "code_build_project_arn" {
 }
 
 output "role_arn" {
-  value = coalesce(data.aws_iam_role.main[0].arn, aws_iam_role.main[0].arn)
+  value = var.role_name != null ? data.aws_iam_role.main[0].arn : aws_iam_role.main[0].arn
 }
 
 output "role_name" {
