@@ -2,8 +2,8 @@ locals {
   code_build_project_name = "${local.project}-vault-build"
 }
 
-resource "aws_security_group" "codebuild_security_group" {
-  name        = "codebuild-security-group"
+resource "aws_security_group" "codebuild" {
+  name        = "CodebuildSecurityGroup"
   description = "Security group for CodeBuild."
 
   vpc_id = module.vpc.vpc_id
@@ -31,7 +31,7 @@ module "codebuild" {
   vpc_config = {
     vpc_id             = module.vpc.vpc_id
     subnets            = module.vpc.private_subnets
-    security_group_ids = [aws_security_group.codebuild_security_group.id]
+    security_group_ids = [aws_security_group.codebuild.id]
   }
 
   environment_variables = [
