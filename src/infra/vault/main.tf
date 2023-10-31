@@ -25,8 +25,7 @@ provider "aws" {
 }
 
 provider "vault" {
-  # connect with a SSH tunnel
-  address = "https://vault-0.vault.private:8200"
+  address = "http://vault-0.vault.private:8200"
 }
 
 # password to get a token for the internal tool that rotates the CRLs
