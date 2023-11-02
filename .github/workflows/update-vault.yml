@@ -84,14 +84,14 @@ jobs:
         shell: bash
         working-directory: src/infra/vault
         run: |
-          terraform init -var e=dev
-  
+          terraform init
+ 
       - name: Terraform plan
         id: plan
         shell: bash
         working-directory: src/infra/vault
         run: |
-          terraform plan  -var e=dev
+          terraform plan
 
   delete_runner:
     name: Delete Self-Hosted Runner
