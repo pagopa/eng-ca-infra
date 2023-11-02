@@ -79,7 +79,7 @@ jobs:
         working-directory: src/infra/vault
         run: |
           e=${{ inputs.environment }}
-          ./terraform.sh init ${e%"_w"}
+          terraform init ${e%"_w"}
   
       - name: Terraform plan
         id: plan
@@ -87,7 +87,7 @@ jobs:
         working-directory: src/infra/vault
         run: |
           e=${{ inputs.environment }}
-          ./terraform.sh plan ${e%"_w"}
+          terraform plan ${e%"_w"}
 
   delete_runner:
     name: Delete Self-Hosted Runner
