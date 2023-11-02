@@ -57,10 +57,11 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Read curr dir
-        run: |
-          pwd
-          ls -la
+      # https://github.com/hashicorp/setup-terraform/issues/84#issuecomment-800515442
+      - name: Install NodeJS as terraform action dep
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
       - name: Read terraform version
         id: read-version
         shell: bash
