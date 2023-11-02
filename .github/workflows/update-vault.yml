@@ -59,9 +59,9 @@ jobs:
           persist-credentials: false
       # https://github.com/hashicorp/setup-terraform/issues/84#issuecomment-800515442
       - name: Install NodeJS as terraform action dep
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
       - name: Read terraform version
         id: read-version
         shell: bash
@@ -79,16 +79,14 @@ jobs:
         shell: bash
         working-directory: src/infra/vault
         run: |
-          e=${{ inputs.environment }}
-          terraform init ${e%"_w"}
+          terraform init -var e=dev
   
       - name: Terraform plan
         id: plan
         shell: bash
         working-directory: src/infra/vault
         run: |
-          e=${{ inputs.environment }}
-          terraform plan ${e%"_w"}
+          terraform plan  -var e=dev
 
   delete_runner:
     name: Delete Self-Hosted Runner
