@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        index: [1, 2]
+        index: [1]
       fail-fast: true
     environment: ${{ inputs.environment }}
 
@@ -51,10 +51,14 @@ jobs:
     environment: dev
     needs: create_runner
     steps:
+      - name: Read curr dir
+        run: |
+          pwd
+          ls -la
       - name: Read terraform version
         id: read-version
         shell: bash
-        working-directory: ../../src/infra/vault
+        working-directory: src/infra/vault
         run: |
           echo "TERRAFORM_VERSION=`cat ../../.terraform-version`" >> $GITHUB_ENV
   
@@ -66,7 +70,7 @@ jobs:
       - name: Terraform Init
         id: init
         shell: bash
-        working-directory: ../../src/infra/vault
+        working-directory: src/infra/vault
         run: |
           e=${{ inputs.environment }}
           ./terraform.sh init ${e%"_w"}
@@ -74,7 +78,7 @@ jobs:
       - name: Terraform plan
         id: plan
         shell: bash
-        working-directory: ../../src/infra/vault
+        working-directory: src/infra/vault
         run: |
           e=${{ inputs.environment }}
           ./terraform.sh plan ${e%"_w"}
@@ -84,7 +88,7 @@ jobs:
     needs: [create_runner, install_and_run_terraform]
     strategy:
       matrix:
-        index: [1, 2]
+        index: [1]
       fail-fast: true
     if: ${{ always() }}
     runs-on: ubuntu-22.04
