@@ -90,6 +90,8 @@ jobs:
         id: plan
         shell: bash
         working-directory: src/infra/vault
+        env:
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
         run: |
           terraform plan
 
