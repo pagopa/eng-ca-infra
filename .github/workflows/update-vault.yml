@@ -3,9 +3,6 @@ name: Update Vault configs
 on:
   workflow_dispatch:
     inputs:
-      env:
-        required: true
-        type: string
       environment:
         description: "Which environment to update."
         type: choice
@@ -71,7 +68,7 @@ jobs:
         shell: bash
         working-directory: ../../src/infra/vault
         run: |
-          e=${{ inputs.env }}
+          e=${{ inputs.environment }}
           ./terraform.sh init ${e%"_w"}
   
       - name: Terraform plan
@@ -79,7 +76,7 @@ jobs:
         shell: bash
         working-directory: ../../src/infra/vault
         run: |
-          e=${{ inputs.env }}
+          e=${{ inputs.environment }}
           ./terraform.sh plan ${e%"_w"}
 
   delete_runner:
