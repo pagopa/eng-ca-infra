@@ -2,6 +2,7 @@ env_short   = "p"
 environment = "prod"
 
 aws_region = "eu-south-1"
+azs        = ["eu-south-1a", "eu-south-1b", "eu-south-1c"]
 
 # dns
 app_primary_domain_name  = "ca.eng.pagopa.it"
