@@ -1,5 +1,5 @@
 terraform {
-  required_version = "~> 1.5.0"
+  required_version = "~> 1.6.0"
 
   backend "s3" {}
 
@@ -23,7 +23,7 @@ resource "aws_s3_bucket" "terraform_states" {
   bucket_prefix = "terraform-backend-"
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 
   tags = merge(var.tags, {
@@ -89,6 +89,7 @@ data "aws_iam_policy" "admin_access" {
 data "aws_caller_identity" "current" {}
 
 # github openid identity provider.
+
 resource "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 
@@ -101,6 +102,7 @@ resource "aws_iam_openid_connect_provider" "github" {
     "1c58a3a8518e8759bf075b76b750d4f2df264fcd",
   ]
 }
+
 
 resource "aws_iam_role" "githubiac" {
   name        = "GitHubActionIACRole"
