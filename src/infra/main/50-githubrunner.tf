@@ -27,11 +27,12 @@ resource "aws_ecs_task_definition" "github_runner_def" {
   network_mode             = "awsvpc"
   cpu                      = 2048
   memory                   = 4096
-  container_definitions    = <<TASK_DEFINITION
+  # TODO
+  container_definitions = <<TASK_DEFINITION
 [
   {
     "name": "githubrunner",
-    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/github-runner:1",
+    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/github-runner:75866b80359bf9bf88630071c751bfead1cb810f",
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
@@ -50,4 +51,32 @@ TASK_DEFINITION
     operating_system_family = "LINUX"
     cpu_architecture        = "X86_64"
   }
+}
+
+resource "aws_security_group" "github_runner" {
+  name        = "Github runner security group to reach Vault"
+  vpc_id      = module.vpc.vpc_id
+  description = "Security group for GitHub to reach Vault"
+}
+
+
+resource "aws_security_group_rule" "github_runner_to_vault" {
+  type                     = "egress"
+  description              = "Github runner rule to reach Vault"
+  security_group_id        = aws_security_group.github_runner.id
+  from_port                = 0
+  to_port                  = 8200
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.vault.id
+}
+
+# needed to allow Github to create the Runner
+resource "aws_security_group_rule" "github_runner_to_internet" {
+  type              = "egress"
+  description       = "Internet access"
+  security_group_id = aws_security_group.github_runner.id
+  from_port         = 0
+  to_port           = 0
+  protocol          = "all"
+  cidr_blocks       = ["0.0.0.0/0"]
 }
