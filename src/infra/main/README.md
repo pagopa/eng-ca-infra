@@ -99,7 +99,9 @@
 | [aws_ecs_task_definition.github_runner_def](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_task_definition) | resource |
 | [aws_iam_access_key.vault-user](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_access_key) | resource |
 | [aws_iam_policy.vault-user-policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.vault_task_exec_policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.vault_task_policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
+| [aws_iam_role.ecs_vault_task_exec_role](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role) | resource |
 | [aws_iam_role.ecs_vault_task_role](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role) | resource |
 | [aws_iam_role.expiring_cert_checker](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role) | resource |
 | [aws_iam_role.lambda_ca](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role) | resource |

@@ -106,10 +106,69 @@ resource "aws_iam_policy" "vault_task_policy" {
   })
 }
 
-
 resource "aws_iam_role_policy_attachment" "vault_task_role_attachment" {
   policy_arn = aws_iam_policy.vault_task_policy.arn
   role       = aws_iam_role.ecs_vault_task_role.name
+}
+
+## Ecs task role
+
+resource "aws_iam_role" "ecs_vault_task_exec_role" {
+  name = "PPAVaultExecutionRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+
+resource "aws_iam_policy" "vault_task_exec_policy" {
+  name        = "PPAEcsVaultExecPolicy"
+  description = "Policy for ECS execution role."
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "ecr"
+        Effect = "Allow",
+        Action = [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+        ],
+        Resource = [
+          aws_ecr_repository.vault_ecr.arn,
+        ]
+      },
+      {
+        Sid    = "cloudwatch"
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ],
+        Resource = [
+          aws_cloudwatch_log_group.ecs_vault.arn
+        ]
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "vault_task_role_attachment" {
+  policy_arn = aws_iam_policy.vault_task_exec_policy.arn
+  role       = aws_iam_role.ecs_vault_task_exec_role.name
 }
 
 
@@ -121,7 +180,7 @@ resource "aws_iam_role_policy_attachment" "vault_task_role_attachment" {
 resource "aws_ecs_task_definition" "ecs_task_def" {
   count                    = 2
   family                   = "vault-ecs-task-def-${count.index}"
-  execution_role_arn       = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskExecutionRole"
+  execution_role_arn       = aws_iam_role.ecs_vault_task_exec_role.arn
   task_role_arn            = aws_iam_role.ecs_vault_task_role.arn
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
