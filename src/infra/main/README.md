@@ -19,6 +19,7 @@
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_codebuild"></a> [codebuild](#module\_codebuild) | ../modules/codebuild |  |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | 5.1.1 |
 
 ## Resources
@@ -97,6 +98,7 @@
 | [aws_ecs_service.vault_svc](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.ecs_task_def](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_task_definition) | resource |
 | [aws_ecs_task_definition.github_runner_def](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_task_definition) | resource |
+| [aws_iam_policy.terraform](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.vault-user-policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.vault_task_exec_policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.vault_task_policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
@@ -114,6 +116,7 @@
 | [aws_iam_role_policy.cw_logs_notifications_handler](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy.dynamodb_table_read_scan](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy.dynamodb_table_write](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy_attachment.terraform](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.vault_task_exec_role_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.vault_task_role_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_kms_alias.s3_key_alias](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/kms_alias) | resource |
@@ -141,13 +144,19 @@
 | [aws_s3_bucket.vault_s3_backend](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_public_access_block.s3_block_public](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.s3_sse](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
+| [aws_security_group.codebuild](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
 | [aws_security_group.frontend](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
+| [aws_security_group.github_runner](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
 | [aws_security_group.vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
+| [aws_security_group_rule.codebuild](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_ssm](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_web](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_web_frontend](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.github_runner_to_internet](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.github_runner_to_vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ingress_ssm](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.vault_api_tcp](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.vault_github_runner](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_service_discovery_private_dns_namespace.vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/service_discovery_private_dns_namespace) | resource |
 | [aws_service_discovery_service.vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/service_discovery_service) | resource |
 | [aws_sns_topic.notifications](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/sns_topic) | resource |
@@ -172,6 +181,7 @@
 | [aws_iam_policy_document.expiring_cert_checker](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.frontend_lambda](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.notifications_handler](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.terraform](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/data-sources/iam_policy_document) | data source |
 | [aws_ssm_parameter.slack_webhook](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/data-sources/ssm_parameter) | data source |
 | [aws_ssm_parameter.smtp_password](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/data-sources/ssm_parameter) | data source |
 | [aws_ssm_parameter.smtp_username](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/data-sources/ssm_parameter) | data source |
