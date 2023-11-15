@@ -2,7 +2,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.5.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.6.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | =5.11.0 |
 
 ## Providers
@@ -98,10 +98,11 @@
 | [aws_ecs_service.vault_svc](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.ecs_task_def](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_task_definition) | resource |
 | [aws_ecs_task_definition.github_runner_def](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_task_definition) | resource |
-| [aws_iam_access_key.vault-user](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_access_key) | resource |
 | [aws_iam_policy.terraform](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.vault-user-policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.vault_task_exec_policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.vault_task_policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
+| [aws_iam_role.ecs_vault_task_exec_role](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role) | resource |
 | [aws_iam_role.ecs_vault_task_role](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role) | resource |
 | [aws_iam_role.expiring_cert_checker](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role) | resource |
 | [aws_iam_role.lambda_ca](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role) | resource |
@@ -116,9 +117,8 @@
 | [aws_iam_role_policy.dynamodb_table_read_scan](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy.dynamodb_table_write](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy_attachment.terraform](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.vault_task_exec_role_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.vault_task_role_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_user.vault-user](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_user) | resource |
-| [aws_iam_user_policy_attachment.vault-user-policy-attach](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_user_policy_attachment) | resource |
 | [aws_kms_alias.s3_key_alias](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/kms_alias) | resource |
 | [aws_kms_alias.vault_key_alias](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/kms_alias) | resource |
 | [aws_kms_key.s3_key](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/kms_key) | resource |
@@ -144,10 +144,11 @@
 | [aws_s3_bucket.vault_s3_backend](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_public_access_block.s3_block_public](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.s3_sse](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
-| [aws_security_group.codebuild_security_group](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
+| [aws_security_group.codebuild](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
 | [aws_security_group.frontend](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
 | [aws_security_group.github_runner](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
 | [aws_security_group.vault](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group) | resource |
+| [aws_security_group_rule.codebuild](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_ssm](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_web](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_web_frontend](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/security_group_rule) | resource |
@@ -213,6 +214,7 @@
 | <a name="input_dns_record_ttl"></a> [dns\_record\_ttl](#input\_dns\_record\_ttl) | Dns record ttl (in sec) | `number` | `86400` | no |
 | <a name="input_ecr_name"></a> [ecr\_name](#input\_ecr\_name) | Name of Elastic Container Registry repo. | `string` | `"vault"` | no |
 | <a name="input_ecs_cluster_name"></a> [ecs\_cluster\_name](#input\_ecs\_cluster\_name) | Name of ECS Cluster | `string` | `"vault-ecs-cluster"` | no |
+| <a name="input_ecs_enable_execute_command"></a> [ecs\_enable\_execute\_command](#input\_ecs\_enable\_execute\_command) | Enable the possibility to execute commands inside containers via ssh. | `bool` | `false` | no |
 | <a name="input_ecs_logs_retention_days"></a> [ecs\_logs\_retention\_days](#input\_ecs\_logs\_retention\_days) | ECS log group retention in days | `number` | `5` | no |
 | <a name="input_ecs_service_name"></a> [ecs\_service\_name](#input\_ecs\_service\_name) | n/a | `string` | `"vault"` | no |
 | <a name="input_enable_nat_gateway"></a> [enable\_nat\_gateway](#input\_enable\_nat\_gateway) | Enable/Create nat gateway | `bool` | `true` | no |

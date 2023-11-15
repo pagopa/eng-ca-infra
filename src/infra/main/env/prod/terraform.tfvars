@@ -1,16 +1,20 @@
-env_short   = "d"
-environment = "dev"
+env_short   = "p"
+environment = "prod"
+
+aws_region = "eu-south-1"
+azs        = ["eu-south-1a", "eu-south-1b", "eu-south-1c"]
 
 # dns
-app_primary_domain_name  = "dev.ca.eng.pagopa.it"
-app_next_env_domain_name = "dummy"
-
+app_primary_domain_name    = "ca.eng.pagopa.it"
+app_next_env_domain_name   = "dummy"
 ecs_enable_execute_command = true
+
+vault_version = "1.0.1"
 
 # Ref: https://pagopa.atlassian.net/wiki/spaces/DEVOPS/pages/132810155/Azure+-+Naming+Tagging+Convention#Tagging
 tags = {
   CreatedBy   = "Terraform"
-  Environment = "Dev"
+  Environment = "Prod"
   Owner       = "ppa-eng-ca"
   Source      = "https://github.com/pagopa/eng-ca-infra"
   CostCenter  = "tier0"
