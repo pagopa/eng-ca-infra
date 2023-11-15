@@ -272,6 +272,12 @@ variable "ecs_logs_retention_days" {
   default     = 5
 }
 
+variable "ecs_enable_execute_command" {
+  type        = bool
+  default     = false
+  description = "Enable the possibility to execute commands inside containers via ssh."
+}
+
 
 #-------------------------
 # HashiCorp Vault

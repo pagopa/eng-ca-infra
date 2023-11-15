@@ -295,7 +295,7 @@ resource "aws_ecs_service" "vault_svc" {
   task_definition        = aws_ecs_task_definition.ecs_task_def[count.index].arn
   desired_count          = 1
   launch_type            = "FARGATE"
-  enable_execute_command = var.env_short == "d" ? true : false
+  enable_execute_command = true
 
   network_configuration {
     subnets = module.vpc.private_subnets
