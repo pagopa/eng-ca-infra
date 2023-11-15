@@ -1,6 +1,8 @@
 default_max_request_duration = "90s"
 ui                           = true
 
+log_level = "Debug"
+
 listener "tcp" {
   address     = "0.0.0.0:8200"
   tls_disable = "true"
