@@ -97,7 +97,6 @@
 | [aws_ecs_service.vault_svc](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.ecs_task_def](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_task_definition) | resource |
 | [aws_ecs_task_definition.github_runner_def](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/ecs_task_definition) | resource |
-| [aws_iam_access_key.vault-user](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_access_key) | resource |
 | [aws_iam_policy.vault-user-policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.vault_task_exec_policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.vault_task_policy](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_policy) | resource |
@@ -115,9 +114,8 @@
 | [aws_iam_role_policy.cw_logs_notifications_handler](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy.dynamodb_table_read_scan](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy.dynamodb_table_write](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy_attachment.vault_task_exec_role_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.vault_task_role_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_user.vault-user](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_user) | resource |
-| [aws_iam_user_policy_attachment.vault-user-policy-attach](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/iam_user_policy_attachment) | resource |
 | [aws_kms_alias.s3_key_alias](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/kms_alias) | resource |
 | [aws_kms_alias.vault_key_alias](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/kms_alias) | resource |
 | [aws_kms_key.s3_key](https://registry.terraform.io/providers/hashicorp/aws/5.11.0/docs/resources/kms_key) | resource |

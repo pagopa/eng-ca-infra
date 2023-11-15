@@ -147,9 +147,7 @@ resource "aws_iam_policy" "vault_task_exec_policy" {
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchGetImage",
         ],
-        Resource = [
-          aws_ecr_repository.vault_ecr.arn,
-        ]
+        Resource = ["*"]
       },
       {
         Sid    = "cloudwatch"
@@ -158,15 +156,26 @@ resource "aws_iam_policy" "vault_task_exec_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents",
         ],
+        Resource = ["*"]
+      },
+      {
+        Sid    = "kms"
+        Effect = "Allow",
+        Action = [
+          "kms:GetPublicKey",
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
+        ],
         Resource = [
-          aws_cloudwatch_log_group.ecs_vault.arn
+          aws_kms_key.vault_key.arn
         ]
       },
     ]
   })
 }
 
-resource "aws_iam_role_policy_attachment" "vault_task_role_attachment" {
+resource "aws_iam_role_policy_attachment" "vault_task_exec_role_attachment" {
   policy_arn = aws_iam_policy.vault_task_exec_policy.arn
   role       = aws_iam_role.ecs_vault_task_exec_role.name
 }
@@ -229,10 +238,6 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
       {
         "name": "AWS_REGION",
         "value": "${var.aws_region}"
-      },
-      {
-        "name": "AWS_SECRET_ACCESS_KEY",
-        "value": "${aws_iam_access_key.vault-user.secret}"
       },
       {
         "name": "VAULT_SEAL_TYPE",
