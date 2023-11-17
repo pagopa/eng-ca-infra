@@ -42,14 +42,14 @@ resource "aws_security_group_rule" "vault_api_tcp" {
   source_security_group_id = aws_security_group.frontend.id
 }
 
-resource "aws_security_group_rule" "vault_github_runner" {
-  type                     = "ingress"
-  description              = "Vault Internal"
-  security_group_id        = aws_security_group.vault.id
-  from_port                = 8200
-  to_port                  = 8201
-  protocol                 = "tcp"
-  source_security_group_id = "self"
+resource "aws_security_group_rule" "vault_internal" {
+  type              = "ingress"
+  description       = "Vault Internal"
+  security_group_id = aws_security_group.vault.id
+  self              = true
+  from_port         = 8200
+  to_port           = 8201
+  protocol          = "tcp"
 }
 
 resource "aws_security_group_rule" "vault_github_runner" {
