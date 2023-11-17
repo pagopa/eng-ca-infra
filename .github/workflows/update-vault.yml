@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        index: [1, 2]
+        index: [1]
       fail-fast: true
     environment: ${{ inputs.environment }}
 
@@ -46,28 +46,61 @@ jobs:
           ecs_task_sec_group: ${{ vars.SEC_GROUP_ID }}
           pat_token: ${{ secrets.BOT_TOKEN }}
 
-  test_job:
-    name: Test Job
-    needs: create_runner
+  install_and_run_terraform:
     runs-on: [self-hosted, "run_id:${{ github.run_id }}"]
     environment: dev
-
+    needs: create_runner
     steps:
-      - name: Test Aws cli command
-        run: aws dynamodb scan --table-name vault-data --region eu-west-1 >> tmp.json && cat tmp.json && rm tmp.json
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # https://github.com/hashicorp/setup-terraform/issues/84#issuecomment-800515442
+      - name: Install NodeJS as terraform action dep
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.IAM_ROLE }}
+      - name: Read terraform version
+        id: read-version
         shell: bash
-
-      - name: Run curl against Vault node
-        run: curl -v http://vault-0.vault.private:8200/v1/sys/health -m 10
+        working-directory: src/infra/vault
+        run: |
+          echo "TERRAFORM_VERSION=`cat ../../.terraform-version`" >> $GITHUB_ENV
+  
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+  
+      - name: Terraform Init
+        id: init
         shell: bash
+        working-directory: src/infra/vault
+        run: |
+          terraform init
+ 
+      - name: Terraform plan
+        id: plan
+        shell: bash
+        working-directory: src/infra/vault
+        env:
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+        run: |
+          terraform plan
 
-  #FIXME
   delete_runner:
     name: Delete Self-Hosted Runner
-    needs: [create_runner, test_job]
+    needs: [create_runner, install_and_run_terraform]
     strategy:
       matrix:
-        index: [1, 2]
+        index: [1]
       fail-fast: true
     if: ${{ always() }}
     runs-on: ubuntu-22.04
