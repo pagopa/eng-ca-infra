@@ -1,7 +1,7 @@
 environment = "Prod"
 
 create_backend = true
-aws_region = "eu-south-1"
+aws_region     = "eu-south-1"
 
 
 tags = {
