@@ -230,6 +230,7 @@
 | <a name="input_vault_ca_path"></a> [vault\_ca\_path](#input\_vault\_ca\_path) | n/a | `string` | `"/v1/intermediate-{}/ca"` | no |
 | <a name="input_vault_crl_path"></a> [vault\_crl\_path](#input\_vault\_crl\_path) | n/a | `string` | `"/v1/intermediate-{}/crl"` | no |
 | <a name="input_vault_list_path"></a> [vault\_list\_path](#input\_vault\_list\_path) | n/a | `string` | `"/v1/intermediate-{}/certs"` | no |
+| <a name="input_vault_log_level"></a> [vault\_log\_level](#input\_vault\_log\_level) | To specify the Vault server's log level | `string` | `"debug"` | no |
 | <a name="input_vault_login_path"></a> [vault\_login\_path](#input\_vault\_login\_path) | n/a | `string` | `"/v1/auth/github/login"` | no |
 | <a name="input_vault_read_path"></a> [vault\_read\_path](#input\_vault\_read\_path) | n/a | `string` | `"/v1/intermediate-{}/cert/"` | no |
 | <a name="input_vault_revoke_path"></a> [vault\_revoke\_path](#input\_vault\_revoke\_path) | n/a | `string` | `"/v1/intermediate-{}/revoke"` | no |

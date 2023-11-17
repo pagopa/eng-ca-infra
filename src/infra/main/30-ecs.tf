@@ -250,6 +250,10 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
       {
         "name": "VAULT_DISABLE_MLOCK",
         "value": "false"
+      },
+      {
+        "name": "VAULT_LOG_LEVEL",
+        "value": "{var.vault_log_level}"
       }
     ],
     "essential": true
