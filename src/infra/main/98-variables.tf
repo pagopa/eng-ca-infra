@@ -287,6 +287,13 @@ variable "vault_version" {
   type    = string
 }
 
+variable "vault_log_level" {
+  type        = string
+  default     = "debug"
+  description = "To specify the Vault server's log level"
+
+}
+
 variable "tags" {
   type = map(any)
   default = {
