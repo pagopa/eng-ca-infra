@@ -195,7 +195,8 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
-  container_definitions    = <<TASK_DEFINITION
+  #comment VAULT_SEAL_TYPE if vault data migration is needed
+  container_definitions = <<TASK_DEFINITION
 [
   {
     "name": "vault-docker",
@@ -210,13 +211,13 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
     },
     "portMappings": [
       {
-        "name": "vault${count.index}",
+        "name": "vault-${count.index}-8200",
         "hostPort": 8200,
         "protocol": "tcp",
         "containerPort": 8200
       },
       {
-        "name": "cluster-vault${count.index}",
+        "name": "vault-${count.index}-8201",
         "hostPort": 8201,
         "protocol": "tcp",
         "containerPort": 8201
@@ -229,11 +230,11 @@ resource "aws_ecs_task_definition" "ecs_task_def" {
       },
       {
           "name": "VAULT_API_ADDR",
-          "value": "http://vault${count.index}:8200"
+          "value": "http://vault-${count.index}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
       },
       {
         "name": "VAULT_CLUSTER_ADDR",
-        "value": "http://cluster-vault${count.index}:8201"
+        "value": "http://vault-${count.index}.${aws_service_discovery_private_dns_namespace.vault.name}:8201"
       },
       {
         "name": "AWS_REGION",
@@ -275,10 +276,10 @@ resource "aws_service_discovery_private_dns_namespace" "vault" {
 
 resource "aws_service_discovery_service" "vault" {
   count = 2
-  name  = format("%s-%s", var.ecs_service_name, count.index)
+  name  = format("%s-%s", var.ecs_service_name, count.index) #vault-0 or vault-1
 
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.vault.id
+    namespace_id = aws_service_discovery_private_dns_namespace.vault.id # vault-0.vault.private or vault-1.vault.private 
 
     dns_records {
       ttl  = 10
@@ -314,18 +315,18 @@ resource "aws_ecs_service" "vault_svc" {
     namespace = aws_service_discovery_private_dns_namespace.vault.arn
     service {
       client_alias {
-        dns_name = "vault${count.index}"
+        dns_name = "vault-${count.index}" #vault-0 or vault-1
         port     = 8200
       }
-      port_name = "vault${count.index}"
+      port_name = "vault-${count.index}-8200"
     }
 
     service {
       client_alias {
-        dns_name = "cluster-vault${count.index}"
+        dns_name = "vault-${count.index}" #vault-0 or vault-1
         port     = 8201
       }
-      port_name = "cluster-vault${count.index}"
+      port_name = "vault-${count.index}-8201"
     }
 
     #TODO: this does not work.If you recreate the service discovery you need to delete the service before.
