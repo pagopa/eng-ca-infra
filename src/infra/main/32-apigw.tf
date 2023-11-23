@@ -5,7 +5,7 @@ resource "aws_api_gateway_rest_api" "this" {
   endpoint_configuration {
     types = ["REGIONAL"]
   }
-  disable_execute_api_endpoint = false #TODO change this
+  disable_execute_api_endpoint = true
 
   binary_media_types = ["*/*"]
 

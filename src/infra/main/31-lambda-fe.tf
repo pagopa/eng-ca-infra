@@ -284,7 +284,7 @@ data "aws_iam_policy_document" "ca_lambda_ssm" {
       "ssm:PutParameter",
     ]
     resources = [
-      "*" #TODO change with exact arn
+      "${data.aws_ssm_parameter.vault_active_address.arn}"
     ]
   }
 }

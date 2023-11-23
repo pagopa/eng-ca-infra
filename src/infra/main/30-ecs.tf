@@ -329,13 +329,6 @@ resource "aws_ecs_service" "vault_svc" {
       port_name = "vault-${count.index}-8201"
     }
 
-    #TODO: this does not work.If you recreate the service discovery you need to delete the service before.
-    /*
-    triggers = {
-      redeployment = aws_service_discovery_service.vault[count.index].arn
-    }
-    */
-
   }
 
   service_registries {
