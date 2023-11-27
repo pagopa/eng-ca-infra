@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import os
 
 import boto3
@@ -11,6 +12,10 @@ BOTO3_CONFIG_TIMEOUT = botocore.client.Config(
     connect_timeout=HTTP_TIMEOUT,
     read_timeout=HTTP_TIMEOUT
 )
+
+# logger
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 # Create a DynamoDB client outside the handler function
 # for cold start mitigation purposes.
@@ -29,12 +34,13 @@ sns = boto3.client(
 
 def publish_to_sns(msg):
     """Simple method that use the sns client to publish a message"""
+    logger.info("publish to sns")
     sns.publish(TopicArn=os.getenv("AWS_SNS_TOPIC"), Message=msg)
 
 
 def handler(_event, _context):
     """Lambda handler method that check if a certificate is expiring"""
-
+    logger.info("handler started")
     # an email reminder notification will be sent if exp date is before
     default_days_interval = 7
 
