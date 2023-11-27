@@ -17,9 +17,9 @@ server_flag = false
 max_ttl = 31536000
 
 [ req_distinguished_name ]
-countryName = IT
-stateOrProvinceName = Roma
-localityName = Roma
-organizationName = PagoPA S.p.A.
-commonName = Certificato Client Internal CA
-emailAddress = email@example.com
+countryName = Country name (IT)
+stateOrProvinceName = State or Province name (Roma)
+localityName = Locality name (Roma)
+organizationName = Org name (PagoPA S.p.A.)
+commonName = CNAMe (Certificato Client Internal CA)
+emailAddress = Email (email@example.com)
