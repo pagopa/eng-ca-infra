@@ -85,8 +85,8 @@ def require_authorization_header(client_ip):
 def publish_to_sns(msg): #TODO replace this with aws_helper.publish_to_sns
 
     BOTO3_CONFIG_TIMEOUT = botocore.client.Config(
-        connect_timeout=Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"),
-        read_timeout=Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT")
+        connect_timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT")),
+        read_timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT"))
     )
     sns = boto3.client(
         'sns',
@@ -156,8 +156,6 @@ def get_vault_address() -> Optional[str]:
     except Exception:
         invalidate_vault_address()
         return None
-
-
 
 
 def invalidate_vault_address():

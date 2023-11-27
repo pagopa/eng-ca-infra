@@ -232,6 +232,11 @@ variable "vault_root_crl_path" {
   default = "/v1/pki/crl" #FIXME CHANGE WITH A DEFINITIVE VALUE
 }
 
+variable "slack_channel_name" {
+  type    = string
+  default = ""
+}
+
 #-------------------------
 # ECR
 #-------------------------
