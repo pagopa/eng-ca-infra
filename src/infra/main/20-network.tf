@@ -126,7 +126,9 @@ resource "aws_security_group_rule" "egress_ssm" {
 }
 
 
-# VPC endpoints
+#---------------------------
+## VPC endpoints
+#---------------------------
 # Needed to make Lambda talk to SSM.
 resource "aws_vpc_endpoint" "ssm" {
   for_each = toset([
@@ -135,6 +137,17 @@ resource "aws_vpc_endpoint" "ssm" {
   ])
   vpc_id             = module.vpc.vpc_id
   service_name       = each.key
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = module.vpc.private_subnets[*]
+  security_group_ids = [aws_security_group.frontend.id]
+
+  private_dns_enabled = true
+}
+
+# Needed to make Lambda talk to SNS.
+resource "aws_vpc_endpoint" "sns" {
+  vpc_id             = module.vpc.vpc_id
+  service_name       = format("com.amazonaws.%s.sns", var.aws_region)
   vpc_endpoint_type  = "Interface"
   subnet_ids         = module.vpc.private_subnets[*]
   security_group_ids = [aws_security_group.frontend.id]

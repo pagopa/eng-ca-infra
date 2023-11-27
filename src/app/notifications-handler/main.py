@@ -37,7 +37,7 @@ dynamodb = boto3.resource(
     )
 
 def send_email(subject, recipients, html_body, attachments):
-
+    logger.info("send_email")
     if os.getenv("ENV") == "PROD":
         # create a multipart message
         msg = email.mime.multipart.MIMEMultipart()
@@ -73,32 +73,40 @@ def send_email(subject, recipients, html_body, attachments):
             msg["To"].split(", ") + msg["Cc"].split(", "),
             msg.as_string()
         )
+        logger.info("email sent")
         server.close()
 
 
 def send_slack(msg_body):
-    if os.getenv("ENV") == "PROD":
-        msg = {
-            "channel": os.getenv("SLACK_CHANNEL"),
-            "username": os.getenv("SLACK_USERNAME"),
-            "text": msg_body
-        }
-        http.request('POST', os.getenv("SLACK_WEBHOOK"), body=json.dumps(msg))
+    logger.info("send slack")
+    # if os.getenv("ENV") == "PROD":
+    msg = {
+        "channel": os.getenv("SLACK_CHANNEL"),
+        "username": os.getenv("SLACK_USERNAME"),
+        "text": msg_body
+    }
+    http.request('POST', os.getenv("SLACK_WEBHOOK"), body=json.dumps(msg))
+    logger.info("slack message sent")
 
 
 def add_email_delivery_status_to_msg(msg_body, email_delivery_status):
+    logger.info("add email delivery status")
     if email_delivery_status == EMAIL_STATUS_SUCCESS:
         msg_body = "\n".join(
             (msg_body, "Successful email notification delivery."))
+        logger.info("email status SUCCESS added")
     elif email_delivery_status == EMAIL_STATUS_FAILURE:
         msg_body = "\n".join((msg_body, "Failed email notification delivery."))
+        logger.info("email status FAILURE added")
     elif email_delivery_status == EMAIL_STATUS_UNREQUESTED:
         msg_body = "\n".join(
             (msg_body, "An email notification was not requested by the operator."))
+        logger.info("email status UNREQUESTED added")
     elif email_delivery_status == EMAIL_STATUS_NO_RECIPIENTS:
         msg_body = "\n".join(
             (msg_body,
              "An email notification was requested, but the certificate had an empty email field."))
+        logger.info("email status NO RECIPIENTS added")
     return msg_body
 
 
@@ -106,6 +114,7 @@ def notify_login_slack(data):
     # open the template
     with open("".join([os.getenv("LAMBDA_TASK_ROOT"),
                        "/templates/slack_login_template.txt"]), "r", encoding="utf-8") as tmpl_f:
+        logger.info("login template found")
         slack_login_template = string.Template(tmpl_f.read())
     # USR: GitHub username
     # IPA: IP Address
@@ -123,6 +132,7 @@ def notify_read_slack(data):
     # open the template
     with open("".join([os.getenv("LAMBDA_TASK_ROOT"),
                        "/templates/slack_read_template.txt"]), "r", encoding="utf-8") as tmpl_f:
+        logger.info("read template found")
         slack_read_template = string.Template(tmpl_f.read())
     # USR: GitHub username
     # IPA: IP Address
@@ -140,6 +150,7 @@ def notify_list_slack(data):
     # open the template
     with open("".join([os.getenv("LAMBDA_TASK_ROOT"),
                        "/templates/slack_list_template.txt"]), "r", encoding="utf-8") as tmpl_f:
+        logger.info("list template found")
         slack_list_template = string.Template(tmpl_f.read())
     # USR: GitHub username
     # IPA: IP Address
@@ -157,6 +168,7 @@ def notify_signature_slack(data, email_delivery):
     # open the template
     with open("".join([os.getenv("LAMBDA_TASK_ROOT"),
                        "/templates/slack_sign_template.txt"]), "r", encoding="utf-8") as tmpl_f:
+        logger.info("sign template found")
         slack_sign_template = string.Template(tmpl_f.read())
     # IPA: IP address
     # RAP: request API
@@ -187,6 +199,7 @@ def notify_revocation_slack(data, email_delivery):
     with open("".join([os.getenv("LAMBDA_TASK_ROOT"),
                        "/templates/slack_revocation_template.txt"]),
               "r", encoding="utf-8") as tmpl_f:
+        logger.info("revoke template found")
         slack_revocation_template = string.Template(tmpl_f.read())
     # IPA: IP Address
     # RAP: request API
@@ -206,6 +219,7 @@ def notify_reminder_slack(data, email_delivery):
     # open the template
     with open("".join([os.getenv("LAMBDA_TASK_ROOT"),
                        "/templates/slack_reminder_template.txt"]), "r", encoding="utf-8") as tmpl_f:
+        logger.info("reminder template found")
         slack_reminder_template = string.Template(tmpl_f.read())
     # NVA: certificate not valid after field
     # INT: certificate intermediate identifier
@@ -228,6 +242,7 @@ def notify_signature_email(data):
     # open the template
     with open("".join([os.getenv("LAMBDA_TASK_ROOT"),
                        "/templates/email_sign_template.html"]), "r", encoding="utf-8") as tmpl_f:
+        logger.info("email - sign template found")
         email_sign_template = string.Template(tmpl_f.read())
     # TEA: To email addresses, in certificate data
     recipients = data["certificate"]["TEA"]
@@ -268,6 +283,7 @@ def notify_revocation_email(data):
     with open("".join([os.getenv("LAMBDA_TASK_ROOT"),
                        "/templates/email_revocation_template.html"]),
               "r", encoding="utf-8") as tmpl_f:
+        logger.info("email - revoke template found")
         email_sign_template = string.Template(tmpl_f.read())
     # TEA: To email address, in certificate data
     recipients = data["certificate"]["TEA"]
@@ -309,6 +325,7 @@ def notify_reminder_email(data):
     with open("".join([os.getenv("LAMBDA_TASK_ROOT"),
                        "/templates/email_reminder_template.html"]),
               "r", encoding="utf-8") as tmpl_f:
+        logger.info("email - notify template found")
         email_reminder_template = string.Template(tmpl_f.read())
     # TEA: To email addresses, in certificate data
     recipients = data["certificate"]["TEA"]
@@ -343,6 +360,7 @@ def save_certificate_info(data):
     # INT: certificate intermediate identifier (secondary index, hash key)
     # NVA: certificate not valid after field (secondary index, sort key)
 
+    logger.info("save certificate info")
     table = dynamodb.Table(os.getenv("AWS_DYNAMODB_TABLE"))
     timestamp = int(datetime.datetime.fromisoformat(
         data["certificate"]["NVA"]).timestamp())
@@ -362,10 +380,12 @@ def save_certificate_info(data):
         },
         ConditionExpression="attribute_not_exists(SER)"
     )
+    logger.info("certificate info saved")
 
 
 def delete_certificate_info(data):
 
+    logger.info("delete certificate")
     table = dynamodb.Table(os.getenv("AWS_DYNAMODB_TABLE"))
     # SER: certificate serial number, it's the hash key
     table.delete_item(
@@ -374,6 +394,7 @@ def delete_certificate_info(data):
         },
         ConditionExpression="attribute_exists(SER)"
     )
+    logger.info("certificate deleted")
 
 
 def handler(event, _context):

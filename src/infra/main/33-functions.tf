@@ -44,9 +44,9 @@ resource "aws_lambda_function" "notifications_handler" {
   environment {
     variables = {
       "ENV"                = upper("${var.environment}")
-      "SLACK_CHANNEL"      = "internal-ca-monitor"
+      "SLACK_CHANNEL"      = var.slack_channel_name
       "SLACK_USERNAME"     = "Internal CA Notifier"
-      "SLACK_WEBHOOK"      = var.environment == "prod" ? data.aws_ssm_parameter.slack_webhook[0].value : "dummy"
+      "SLACK_WEBHOOK"      = data.aws_ssm_parameter.slack_webhook.value
       "SMTP_HOST"          = "smtp.gmail.com"
       "SMTP_PORT"          = "587"
       "SMTP_USERNAME"      = var.environment == "prod" ? data.aws_ssm_parameter.smtp_username[0].value : "dummy"
@@ -112,7 +112,7 @@ data "aws_iam_policy_document" "allow_publish_sns_expiring_cert_checker" {
       "SNS:Publish"
     ]
     resources = [
-      "${aws_cloudwatch_log_group.functions_expiring_cert_checker.arn}"
+      "${aws_sns_topic.notifications.arn}"
     ]
   }
 }

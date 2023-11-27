@@ -3,6 +3,11 @@ data "aws_ssm_parameter" "vault_active_address" {
   name = "ca.eng-vault_active_address"
 }
 
+#This SSM parameter contains the Slack webhook
+data "aws_ssm_parameter" "slack_webhook" {
+  name = "ca.eng-slack_webhook"
+}
+
 ##
 ## These SSM parameters contain the SMTP credentials 
 ## and will be created only in the prod environment.
@@ -18,8 +23,4 @@ data "aws_ssm_parameter" "smtp_password" {
   name  = "ca.eng-smtp_password"
 }
 
-#this SSM parameter contains the Slack webhook
-data "aws_ssm_parameter" "slack_webhook" {
-  count = var.environment == "prod" ? 1 : 0
-  name  = "ca.eng-slack_webhook"
-}
+

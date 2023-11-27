@@ -65,7 +65,7 @@ resource "aws_lambda_function" "lambda_ca" {
 
   environment {
     variables = {
-      #   AWS_SNS_TOPIC        = aws_sns_topic.notifications.arn #TODO insert when it's time
+      AWS_SNS_TOPIC       = aws_sns_topic.notifications.arn
       VAULT_0_ADDR        = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
       VAULT_1_ADDR        = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
       VAULT_LIST_PATH     = var.vault_list_path
@@ -288,4 +288,23 @@ data "aws_iam_policy_document" "ca_lambda_ssm" {
     ]
   }
 }
+
+resource "aws_iam_role_policy" "ca_lambda_publish_sns" {
+  name   = "ca_lambda_publish_sns"
+  role   = aws_iam_role.lambda_ca.id
+  policy = data.aws_iam_policy_document.ca_lambda_publish_sns.json
+}
+
+data "aws_iam_policy_document" "ca_lambda_publish_sns" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "SNS:Publish",
+    ]
+    resources = [
+      "${aws_sns_topic.notifications.arn}"
+    ]
+  }
+}
+
 #endregion
