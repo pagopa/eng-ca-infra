@@ -48,6 +48,10 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+      - name: Che versione ho di Python
+        run: |
+          pip --version && python --version
+
       - name: Terraform Format
         id: fmt
         run: terraform fmt -check
