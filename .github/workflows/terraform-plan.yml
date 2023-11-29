@@ -50,8 +50,8 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # 4.7.1
-        # with:
-        # python-version-file: "../../.python-version" # Read python version from a file .python-version
+        with:
+          python-version: "3.9" # find a way to sync this with the content of .python-version file
 
       - name: Che versione ho di Python
         run: |
