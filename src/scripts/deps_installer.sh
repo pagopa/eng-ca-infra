@@ -40,8 +40,8 @@ mkdir -p "$layer_path"/python
 
 
 # Installs the deps for manylinux2014_x86 platform
-pip install \
-    --python "$python_version" \
+python${python_version} -m pip \
+     install \
     --platform manylinux2014_"$lambda_arch" \
     --target="$layer_path"/python/ \
     --implementation cp \
