@@ -53,7 +53,7 @@ jobs:
         with:
           python-version: "3.9" # find a way to sync this with the content of .python-version file
 
-      - name: Che versione ho di Python
+      - name: Check Python & Pip Version
         run: |
           pip --version && python --version
 
