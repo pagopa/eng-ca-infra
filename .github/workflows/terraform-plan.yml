@@ -48,6 +48,15 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+      - name: Setup Python
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # 4.7.1
+        with:
+          python-version: "3.9" # find a way to sync this with the content of .python-version file
+
+      - name: Che versione ho di Python
+        run: |
+          pip --version && python --version
+
       - name: Terraform Format
         id: fmt
         run: terraform fmt -check

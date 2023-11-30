@@ -5,28 +5,27 @@ on:
     branches:
       - main
     paths:
-      - 'src/infra/main/**'
-      - '.github/workflows/*.yml'
+      - "src/infra/main/**"
+      - ".github/workflows/*.yml"
   workflow_dispatch:
     inputs:
       logLevel:
-        description: 'Log level'
+        description: "Log level"
         required: true
-        default: 'warning' 
+        default: "warning"
         type: choice
         options:
-        - info
-        - warning
-        - debug
+          - info
+          - warning
+          - debug
       environment:
-        description: 'Which environment to update.'
+        description: "Which environment to update."
         type: choice
         required: true
         default: dev
         options:
-        - dev
-        - prod
-
+          - dev
+          - prod
 
 jobs:
   manual-trigger:
@@ -35,8 +34,8 @@ jobs:
     runs-on: ubuntu-22.04
     continue-on-error: false
     permissions:
-      id-token: write   # This is required for requesting the JWT
-      contents: read    # This is required for actions/checkout
+      id-token: write # This is required for requesting the JWT
+      contents: read # This is required for actions/checkout
     environment: ${{ inputs.environment }}
 
     steps:
@@ -58,31 +57,36 @@ jobs:
           working-directory: src/infra/main
 
   merge-trigger:
-      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-      name: "terraform-apply (merge)"
-      strategy:
-        max-parallel: 1
-        matrix:
-          environment: [dev, prod]
-      runs-on: ubuntu-22.04
-      continue-on-error: false
-      environment: ${{ matrix.environment }}
-      permissions:
-        id-token: write   # This is required for requesting the JWT
-        contents: read    # This is required for actions/checkout
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    name: "terraform-apply (merge)"
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: [dev, prod]
+    runs-on: ubuntu-22.04
+    continue-on-error: false
+    environment: ${{ matrix.environment }}
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read # This is required for actions/checkout
 
-      steps:
-        - name: Checkout
-          uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+    steps:
+      - name: Checkout
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
 
-        - name: Configure AWS Credentials
-          uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838
-          with:
-            role-to-assume: ${{ vars.IAM_ROLE }}
-            aws-region: ${{ vars.AWS_REGION }}
-        
-        - name: Apply
-          uses: ./.github/workflows/apply
-          with:
-            env: ${{ matrix.environment }}
-            working-directory: src/infra/main
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838
+        with:
+          role-to-assume: ${{ vars.IAM_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # 4.7.1
+        with:
+          python-version: "3.9" # find a way to sync this with the content of .python-version file
+
+      - name: Apply
+        uses: ./.github/workflows/apply
+        with:
+          env: ${{ matrix.environment }}
+          working-directory: src/infra/main
