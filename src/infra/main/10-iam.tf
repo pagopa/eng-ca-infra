@@ -177,6 +177,59 @@ resource "aws_iam_role_policy_attachment" "vault_task_exec_role_attachment" {
 #endregion
 
 #---------------------------
+# Common Resources for Lambda functions
+#---------------------------
+#region
+data "aws_iam_policy_document" "lambda_x_ray" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords",
+      "xray:GetSamplingRules",
+      "xray:GetSamplingTargets",
+      "xray:GetSamplingStatisticSummaries"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "vault_address_ssm" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+      "ssm:PutParameter",
+    ]
+    resources = [
+      "${data.aws_ssm_parameter.vault_active_address.arn}"
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "lambda_vpc" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface",
+      "ec2:AssignPrivateIpAddresses",
+      "ec2:UnassignPrivateIpAddresses"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}
+#endregion
+
+#---------------------------
 # Lambda Frontend
 #---------------------------
 #region
@@ -226,67 +279,19 @@ data "aws_iam_policy_document" "ca_lambda_cw" {
 resource "aws_iam_role_policy" "ca_lambda_vpc" {
   name   = "ca_lambda_vpc"
   role   = aws_iam_role.lambda_ca.id
-  policy = data.aws_iam_policy_document.ca_lambda_vpc.json
-}
-
-data "aws_iam_policy_document" "ca_lambda_vpc" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "ec2:CreateNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DeleteNetworkInterface",
-      "ec2:AssignPrivateIpAddresses",
-      "ec2:UnassignPrivateIpAddresses"
-    ]
-    resources = [
-      "*"
-    ]
-  }
+  policy = data.aws_iam_policy_document.lambda_vpc.json
 }
 
 resource "aws_iam_role_policy" "ca_lambda_x_ray" {
   name   = "ca_lambda_x_ray"
   role   = aws_iam_role.lambda_ca.id
-  policy = data.aws_iam_policy_document.ca_lambda_x_ray.json
+  policy = data.aws_iam_policy_document.lambda_x_ray.json
 }
 
-data "aws_iam_policy_document" "ca_lambda_x_ray" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "xray:PutTraceSegments",
-      "xray:PutTelemetryRecords",
-      "xray:GetSamplingRules",
-      "xray:GetSamplingTargets",
-      "xray:GetSamplingStatisticSummaries"
-    ]
-    resources = [
-      "*"
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "ca_lambda_ssm" {
+resource "aws_iam_role_policy" "vault_address_ssm" {
   name   = "ca_lambda_ssm"
   role   = aws_iam_role.lambda_ca.id
   policy = data.aws_iam_policy_document.ca_lambda_ssm.json
-}
-
-data "aws_iam_policy_document" "ca_lambda_ssm" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "ssm:GetParameter",
-      "ssm:PutParameter",
-    ]
-    resources = [
-      "${data.aws_ssm_parameter.vault_active_address.arn}"
-    ]
-  }
 }
 
 resource "aws_iam_role_policy" "ca_lambda_publish_sns" {
@@ -309,6 +314,75 @@ data "aws_iam_policy_document" "ca_lambda_publish_sns" {
 #endregion
 #endregion
 
+
+#---------------------------
+# Lambda Rotate CRL
+#---------------------------
+#region
+resource "aws_iam_role" "rotate_crl" {
+  name               = "rotate_crl"
+  assume_role_policy = data.aws_iam_policy_document.rotate_crl.json
+}
+
+# IAM Policies
+#region
+data "aws_iam_policy_document" "rotate_crl" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "rotate_crl_cw" {
+  name   = "rotate_crl_cw"
+  role   = aws_iam_role.rotate_crl.id
+  policy = data.aws_iam_policy_document.rotate_crl_cw.json
+}
+
+data "aws_iam_policy_document" "rotate_crl_cw" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents"
+    ]
+    resources = [
+      "${aws_cloudwatch_log_group.rotate_crl_application_log.arn}:*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "rotate_crl_lambda_vpc" {
+  name   = "rotate_crl_lambda_vpc"
+  role   = aws_iam_role.rotate_crl.id
+  policy = data.aws_iam_policy_document.lambda_vpc.json
+}
+
+resource "aws_iam_role_policy" "rotate_crl_x_ray" {
+  name   = "rotate_crl_x_ray"
+  role   = aws_iam_role.lambda_ca.id
+  policy = data.aws_iam_policy_document.lambda_x_ray.json
+}
+resource "aws_iam_role_policy" "rotate_crl_ssm" {
+  name   = "rotate_crl_ssm"
+  role   = aws_iam_role.lambda_ca.id
+  policy = data.aws_iam_policy_document.vault_address_ssm.json
+}
+
+
+
+#endregion
+
+#endregion
 
 #---------------------------
 # Lambda Notifications Handler
@@ -396,6 +470,12 @@ data "aws_iam_policy_document" "dynamodb_table_read_scan" {
     ]
   }
 }
+
+resource "aws_iam_role_policy" "notifications_handler_x_ray" {
+  name   = "notifications_handler_x_ray"
+  role   = aws_iam_role.notifications_handler.id
+  policy = data.aws_iam_policy_document.lambda_x_ray.json
+}
 #endregion
 #endregion
 
@@ -411,6 +491,8 @@ resource "aws_iam_role" "expiring_cert_checker" {
   tags               = var.tags
 }
 
+# IAM Policies
+#region
 data "aws_iam_policy_document" "expiring_cert_checker" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -421,9 +503,6 @@ data "aws_iam_policy_document" "expiring_cert_checker" {
     }
   }
 }
-
-# IAM Policies
-#region
 resource "aws_iam_role_policy" "allow_publish_sns_expiring_cert_checker" {
   name   = "allow_publish_sns_expiring_cert_checker"
   policy = data.aws_iam_policy_document.allow_publish_sns_expiring_cert_checker.json
@@ -465,6 +544,14 @@ data "aws_iam_policy_document" "cw_logs_expiring_cert_checker" {
     ]
   }
 }
+
+resource "aws_iam_role_policy" "expiring_cert_checker_x_ray" {
+  name   = "expiring_cert_checker_x_ray"
+  role   = aws_iam_role.expiring_cert_checker.id
+  policy = data.aws_iam_policy_document.lambda_x_ray.json
+}
+
 #endregion
 
 #endregion
+

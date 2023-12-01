@@ -28,6 +28,21 @@ data "archive_file" "expiring_cert_checker_zip" {
   output_path = "${local.full_path_root_project}/expiring_cert_checker.zip"
 }
 
+#TODO update with a better path for the zip and the files
+data "archieve_file" "rotare_crl_zip" {
+  type        = "zip"
+  source_dir  = "${local.relative_path_app}/"
+  output_path = "${local.full_path_root_project}/rotate_crl.zip"
+  excludes = [
+    "frontend/frontend.py",
+    "expiring-cert-checker",
+    "notifications-handler",
+    "tests",
+    "requirements.txt",
+    "requirements-dev.txt"
+  ]
+}
+
 ##
 ## Lambda functions
 ##
@@ -74,6 +89,33 @@ resource "aws_lambda_function" "expiring_cert_checker" {
   }
 }
 
+resource "aws_lambda_function" "rotate_crl" {
+  depends_on    = [data.archive_file.rotate_crl]
+  filename      = data.archive_file.rotate_crl.output_path
+  function_name = "rotate_crl"
+  role          = aws_iam_role.lambda_ca.arn #FIXME change with one more specific
+  handler       = "frontend.rotate_crl.lambda_handler"
+  architectures = [var.lambda_arch]
+  timeout       = 30
+
+  environment {
+    variables = {
+      VAULT_0_ADDR     = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_1_ADDR     = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_LOGIN_PATH = var.vault_login_path
+    }
+  }
+
+  vpc_config {
+    subnet_ids         = module.vpc.private_subnets[*]
+    security_group_ids = [aws_security_group.frontend.id] #TODO change with a security group more specific
+  }
+
+  source_code_hash = data.archive_file.rotate_crl.output_base64sha256
+
+  runtime = "python${local.python_version}"
+
+}
 
 ##
 ## Trigger lambda from SNS
@@ -120,5 +162,10 @@ resource "aws_cloudwatch_log_group" "functions_expiring_cert_checker" {
 
 resource "aws_cloudwatch_log_group" "functions_notifications_handler" {
   name              = "/lambda/${aws_lambda_function.notifications_handler.function_name}"
+  retention_in_days = 90
+}
+
+resource "aws_cloudwatch_log_group" "rotate_crl_application_log" {
+  name              = "/lambda/${aws_lambda_function.rotate_crl.function_name}"
   retention_in_days = 90
 }
