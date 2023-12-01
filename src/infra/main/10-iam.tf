@@ -288,10 +288,10 @@ resource "aws_iam_role_policy" "ca_lambda_x_ray" {
   policy = data.aws_iam_policy_document.lambda_x_ray.json
 }
 
-resource "aws_iam_role_policy" "vault_address_ssm" {
+resource "aws_iam_role_policy" "ca_lambda_ssm" {
   name   = "ca_lambda_ssm"
   role   = aws_iam_role.lambda_ca.id
-  policy = data.aws_iam_policy_document.ca_lambda_ssm.json
+  policy = data.aws_iam_policy_document.vault_address_ssm.json
 }
 
 resource "aws_iam_role_policy" "ca_lambda_publish_sns" {

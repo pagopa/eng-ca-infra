@@ -29,7 +29,7 @@ data "archive_file" "expiring_cert_checker_zip" {
 }
 
 #TODO update with a better path for the zip and the files
-data "archieve_file" "rotare_crl_zip" {
+data "archive_file" "rotate_crl_zip" {
   type        = "zip"
   source_dir  = "${local.relative_path_app}/"
   output_path = "${local.full_path_root_project}/rotate_crl.zip"
@@ -90,8 +90,8 @@ resource "aws_lambda_function" "expiring_cert_checker" {
 }
 
 resource "aws_lambda_function" "rotate_crl" {
-  depends_on    = [data.archive_file.rotate_crl]
-  filename      = data.archive_file.rotate_crl.output_path
+  depends_on    = [data.archive_file.rotate_crl_zip]
+  filename      = data.archive_file.rotate_crl_zip.output_path
   function_name = "rotate_crl"
   role          = aws_iam_role.lambda_ca.arn #FIXME change with one more specific
   handler       = "frontend.rotate_crl.lambda_handler"
@@ -111,7 +111,7 @@ resource "aws_lambda_function" "rotate_crl" {
     security_group_ids = [aws_security_group.frontend.id] #TODO change with a security group more specific
   }
 
-  source_code_hash = data.archive_file.rotate_crl.output_base64sha256
+  source_code_hash = data.archive_file.rotate_crl_zip.output_base64sha256
 
   runtime = "python${local.python_version}"
 
