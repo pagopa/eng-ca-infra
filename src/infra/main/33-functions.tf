@@ -93,7 +93,7 @@ resource "aws_lambda_function" "rotate_crl" {
   depends_on    = [data.archive_file.rotate_crl_zip]
   filename      = data.archive_file.rotate_crl_zip.output_path
   function_name = "rotate_crl"
-  role          = aws_iam_role.lambda_ca.arn #FIXME change with one more specific
+  role          = aws_iam_role.rotate_crl.arn
   handler       = "frontend.rotate_crl.lambda_handler"
   architectures = [var.lambda_arch]
   timeout       = 30
