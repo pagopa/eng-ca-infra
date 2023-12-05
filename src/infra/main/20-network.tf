@@ -32,14 +32,24 @@ resource "aws_security_group" "vault" {
   description = "Security group for HashiCorp Vault"
 }
 
-resource "aws_security_group_rule" "vault_api_tcp" {
+resource "aws_security_group_rule" "vault_api_tcp_frontend" {
   type                     = "ingress"
-  description              = "Vault API/UI"
+  description              = "Vault API/UI - Frontend Lambda"
   security_group_id        = aws_security_group.vault.id
   from_port                = 8200
   to_port                  = 8200
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.frontend.id
+}
+
+resource "aws_security_group_rule" "vault_api_tcp_rotate_crl" {
+  type                     = "ingress"
+  description              = "Vault API/UI - Rotate CRL Lambda"
+  security_group_id        = aws_security_group.vault.id
+  from_port                = 8200
+  to_port                  = 8200
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.rotate_crl.id
 }
 
 resource "aws_security_group_rule" "vault_internal" {
@@ -84,11 +94,11 @@ resource "aws_security_group_rule" "egress_web" {
 }
 
 #---------------------------
-## Lambda
+## Lambda Frontend
 #---------------------------
 
 resource "aws_security_group" "frontend" {
-  name        = "Frontend security group 01"
+  name        = "Frontend security group"
   vpc_id      = module.vpc.vpc_id
   description = "Security group for AWS Lambda"
 }
@@ -125,11 +135,49 @@ resource "aws_security_group_rule" "egress_ssm" {
   cidr_blocks       = [module.vpc.vpc_cidr_block]
 }
 
+#---------------------------
+## Lambda Rotate CRL
+#---------------------------
+resource "aws_security_group" "rotate_crl" {
+  name        = "Rotate CRL Lambda security group"
+  vpc_id      = module.vpc.vpc_id
+  description = "Security group for AWS Lambda"
+}
+
+resource "aws_security_group_rule" "rotate_crl_ingress_ssm" {
+  type              = "ingress"
+  description       = "Ingress to 443 port"
+  security_group_id = aws_security_group.rotate_crl.id
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = [module.vpc.vpc_cidr_block]
+}
+
+resource "aws_security_group_rule" "rotate_crl_egress_ssm" {
+  type              = "egress"
+  description       = "Egress to 443 port"
+  security_group_id = aws_security_group.rotate_crl.id
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = [module.vpc.vpc_cidr_block]
+}
+
+resource "aws_security_group_rule" "rotate_crl_egress_vault" {
+  type                     = "egress"
+  description              = "Connection between Rotate CRL Lambda and Vault inside ECS"
+  security_group_id        = aws_security_group.rotate_crl.id
+  from_port                = 8200
+  to_port                  = 8200
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.vault.id
+}
 
 #---------------------------
 ## VPC endpoints
 #---------------------------
-# Needed to make Lambda talk to SSM.
+# Needed to make Lambdas talk to SSM.
 resource "aws_vpc_endpoint" "ssm" {
   for_each = toset([
     format("com.amazonaws.%s.ssm", var.aws_region),
@@ -139,7 +187,7 @@ resource "aws_vpc_endpoint" "ssm" {
   service_name       = each.key
   vpc_endpoint_type  = "Interface"
   subnet_ids         = module.vpc.private_subnets[*]
-  security_group_ids = [aws_security_group.frontend.id]
+  security_group_ids = [aws_security_group.frontend.id, aws_security_group.rotate_crl.id]
 
   private_dns_enabled = true
 }

@@ -34,7 +34,7 @@ data "archive_file" "rotate_crl_zip" {
   source_dir  = "${local.relative_path_app}/"
   output_path = "${local.full_path_root_project}/rotate_crl.zip"
   excludes = [
-    "frontend/frontend.py",
+    "frontend",
     "expiring-cert-checker",
     "notifications-handler",
     "tests",
@@ -94,7 +94,7 @@ resource "aws_lambda_function" "rotate_crl" {
   filename      = data.archive_file.rotate_crl_zip.output_path
   function_name = "rotate_crl"
   role          = aws_iam_role.rotate_crl.arn
-  handler       = "frontend.rotate_crl.lambda_handler"
+  handler       = "rotate_crl.main.lambda_handler"
   architectures = [var.lambda_arch]
   timeout       = 30
 
@@ -108,7 +108,7 @@ resource "aws_lambda_function" "rotate_crl" {
 
   vpc_config {
     subnet_ids         = module.vpc.private_subnets[*]
-    security_group_ids = [aws_security_group.frontend.id] #TODO change with a security group more specific
+    security_group_ids = [aws_security_group.rotate_crl.id]
   }
 
   source_code_hash = data.archive_file.rotate_crl_zip.output_base64sha256

@@ -35,6 +35,7 @@ data "archive_file" "lambda" {
   excludes = [
     "expiring-cert-checker",
     "notifications-handler",
+    "rotate_crl",
     "tests",
     "requirements.txt",
     "requirements-dev.txt"
