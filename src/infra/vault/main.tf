@@ -5,26 +5,28 @@ terraform {
       source  = "hashicorp/aws"
     }
     vault = {
-      version = "~> 2.18.0"
+      version = "~> 3.18.0"
       source  = "hashicorp/vault"
     }
   }
   backend "s3" {
     # managed outside tf
-    bucket  = "ca-eng-dev-tfstate-927384502041"
-    key     = "vault/terraform.tfstate"
+    bucket  = "${var.s3_bucket_name}"
+    key     = "${var.s3_bucket_key}"
     encrypt = true
     # managed outside tf
-    dynamodb_table = "ca-eng-dev-tfstate-lock-295382553089"
-    region         = "eu-west-1"
+    dynamodb_table = "${var.s3_bucket_dynamodb_table}"
+    region         = "${var.aws_region}"
   }
 }
 
 provider "aws" {
-  region = "eu-west-1"
+  region = "${var.aws_region}"
 }
 
 provider "vault" {
+  # static pointer to node 0, it will auto redirect requests
+  # toward the active node
   address = "http://vault-0.vault.private:8200"
 }
 

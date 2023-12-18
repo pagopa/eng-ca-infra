@@ -13,6 +13,18 @@ variable "s3_bucket_name" {
   type        = string
 }
 
+variable "s3_bucket_key" {
+  description = "Name of S3 key used for Vault backend"
+  default     = ""
+  type        = string
+}
+
+variable "s3_bucket_dynamodb_table" {
+  description = "Name of DynamoDB table used for Vault lock"
+  default     = ""
+  type        = string
+}
+
 #-------------------------
 # DNS
 #-------------------------
