@@ -12,8 +12,8 @@ resource "vault_mount" "int_01" {
 
 resource "vault_pki_secret_backend_config_urls" "int_01" {
   backend                 = vault_mount.int_01.path
-  issuing_certificates    = ["http://ca.secops.pagopa.it/01/ca"]
-  crl_distribution_points = ["http://ca.secops.pagopa.it/01/crl"]
+  issuing_certificates    = ["https://${var.app_primary_domain_name}/intermediate/01/ca"]
+  crl_distribution_points = ["https://${var.app_primary_domain_name}/intermediate/01/crl"]
 }
 
 resource "vault_pki_secret_backend_crl_config" "int_01" {
