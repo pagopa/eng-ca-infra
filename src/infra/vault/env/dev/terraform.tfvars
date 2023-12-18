@@ -3,6 +3,7 @@ environment = "dev"
 
 # dns
 app_primary_domain_name  = "dev.ca.eng.pagopa.it"
+api_primary_domain_name  = "api.dev.ca.eng.pagopa.it"
 
 # Ref: https://pagopa.atlassian.net/wiki/spaces/DEVOPS/pages/132810155/Azure+-+Naming+Tagging+Convention#Tagging
 tags = {

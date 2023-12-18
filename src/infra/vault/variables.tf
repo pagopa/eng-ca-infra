@@ -4,6 +4,18 @@ variable "aws_region" {
   default     = "eu-west-1"
 }
 
+variable "environment" {
+  type        = string
+  default     = ""
+  description = "Environment"
+}
+
+variable "env_short" {
+  type        = string
+  default     = ""
+  description = "Evnironment short."
+}
+
 #-------------------------
 # S3
 #-------------------------
@@ -30,6 +42,10 @@ variable "s3_bucket_dynamodb_table" {
 #-------------------------
 #region DNS
 variable "app_primary_domain_name" {
+  type    = string
+  default = ""
+}
+variable "api_primary_domain_name" {
   type    = string
   default = ""
 }
