@@ -20,6 +20,6 @@ tags = {
   CreatedBy   = "Terraform"
   Environment = "Prod"
   Owner       = "ppa-eng-ca"
-  Source      = "https://github.com/pagopa/eng-ca-infra"
+  Source      = "https://github.com/pagopa/eng-ca"
   CostCenter  = "tier0"
 }
