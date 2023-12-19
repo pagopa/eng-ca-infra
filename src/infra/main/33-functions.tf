@@ -96,21 +96,21 @@ resource "aws_lambda_function" "rotate_crl" {
   role          = aws_iam_role.rotate_crl.arn
   handler       = "rotate_crl.main.lambda_handler"
   architectures = [var.lambda_arch]
-  timeout       = 30
+  timeout       = 6
 
   environment {
     variables = {
-      VAULT_0_ADDR       = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
-      VAULT_1_ADDR       = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
-      VAULT_LOGIN_PATH   = var.vault_login_path
-      VAULT_LIST_MOUNTS  = var.vault_list_mounts
-      VAULT_ROTATE_CRL   = var.vault_rotate_crl
-      VAULT_TIDY         = var.vault_tidy
-      VAULT_TMP_PATH     = var.vault_tmp_path
-      VAULT_CA_CERT      = var.vault_ca_cert
-      VAULT_CRL_USERNAME = var.vault_crl_username
-      PASSWORD           = data.aws_ssm_parameter.crl_renewer_password.value
-      SLACK_CHANNEL_NAME = var.slack_channel_name
+      VAULT_0_ADDR              = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_1_ADDR              = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_INTERNAL_LOGIN_PATH = var.vault_internal_login_path
+      VAULT_LIST_MOUNTS         = var.vault_list_mounts
+      VAULT_ROTATE_CRL          = var.vault_rotate_crl
+      VAULT_TIDY                = var.vault_tidy
+      VAULT_TMP_PATH            = var.vault_tmp_path
+      VAULT_CA_CERT             = var.vault_ca_cert
+      VAULT_CRL_USERNAME        = var.vault_crl_username
+      PASSWORD                  = data.aws_ssm_parameter.crl_renewer_password.value
+      SLACK_CHANNEL_NAME        = var.slack_channel_name
     }
   }
 
@@ -120,6 +120,8 @@ resource "aws_lambda_function" "rotate_crl" {
   }
 
   source_code_hash = data.archive_file.rotate_crl_zip.output_base64sha256
+
+  layers = [aws_lambda_layer_version.lambda_layer.arn]
 
   runtime = "python${local.python_version}"
 
@@ -145,16 +147,32 @@ resource "aws_cloudwatch_event_rule" "hourly_event" {
   schedule_expression = "rate(1 hour)"
 }
 
+# Expiring cert cheker
 resource "aws_cloudwatch_event_target" "invoke_expiring_cert_checker" {
   rule      = aws_cloudwatch_event_rule.hourly_event.name
   target_id = "expiring_cert_checker"
   arn       = aws_lambda_function.expiring_cert_checker.arn
 }
 
-resource "aws_lambda_permission" "event_bridge" {
+resource "aws_lambda_permission" "event_bridge_expire_cert_checker" {
   statement_id  = "AllowExecutionFromCloudwatch"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.expiring_cert_checker.arn
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.hourly_event.arn
+}
+
+# Rotate CRL
+resource "aws_cloudwatch_event_target" "invoke_rotate_crl" {
+  rule      = aws_cloudwatch_event_rule.hourly_event.name
+  target_id = "rotate_crl"
+  arn       = aws_lambda_function.rotate_crl.arn
+}
+
+resource "aws_lambda_permission" "event_bridge_rotate_crl" {
+  statement_id  = "AllowExecutionFromCloudwatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.rotate_crl.arn
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.hourly_event.arn
 }

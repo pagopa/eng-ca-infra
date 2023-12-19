@@ -361,6 +361,30 @@ data "aws_iam_policy_document" "rotate_crl_cw" {
   }
 }
 
+data "aws_iam_policy_document" "crl_renewer_ssm" {
+  # Vault active address
+  statement {
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+      "ssm:PutParameter"
+    ]
+    resources = [
+      "${data.aws_ssm_parameter.vault_active_address.arn}"
+    ]
+  }
+  # Crl Renewer password
+  statement {
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter"
+    ]
+    resources = [
+      "${data.aws_ssm_parameter.crl_renewer_password.arn}"
+    ]
+  }
+}
+
 resource "aws_iam_role_policy" "rotate_crl_lambda_vpc" {
   name   = "rotate_crl_lambda_vpc"
   role   = aws_iam_role.rotate_crl.id
@@ -369,15 +393,15 @@ resource "aws_iam_role_policy" "rotate_crl_lambda_vpc" {
 
 resource "aws_iam_role_policy" "rotate_crl_x_ray" {
   name   = "rotate_crl_x_ray"
-  role   = aws_iam_role.lambda_ca.id
+  role   = aws_iam_role.rotate_crl.id
   policy = data.aws_iam_policy_document.lambda_x_ray.json
 }
+
 resource "aws_iam_role_policy" "rotate_crl_ssm" {
   name   = "rotate_crl_ssm"
-  role   = aws_iam_role.lambda_ca.id
-  policy = data.aws_iam_policy_document.vault_address_ssm.json
+  role   = aws_iam_role.rotate_crl.id
+  policy = data.aws_iam_policy_document.crl_renewer_ssm.json
 }
-
 
 
 #endregion

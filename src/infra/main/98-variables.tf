@@ -248,6 +248,11 @@ variable "vault_tidy" {
   default = "tidy"
 }
 
+variable "vault_internal_login_path" {
+  type    = string
+  default = "/auth/userpass/login/"
+}
+
 variable "vault_tmp_path" {
   type    = string
   default = "/tmp/vault-mounts-list"

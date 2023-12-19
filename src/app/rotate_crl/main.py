@@ -8,7 +8,7 @@ from utils.utils import get_vault_address
 
 VAULT_ADDRESS = get_vault_address()
 VAULT_API_PREFIX = "/v1"
-VAULT_INTERNAL_LOGIN = Config.get_env("VAULT_LOGIN_PATH")
+VAULT_INTERNAL_LOGIN = Config.get_env("VAULT_INTERNAL_LOGIN_PATH")
 VAULT_LIST_MOUNTS = Config.get_env("VAULT_LIST_MOUNTS")
 # skip inital / char
 VAULT_ROTATE_CRL = Config.get_env("VAULT_ROTATE_CRL")
@@ -29,6 +29,11 @@ def lambda_handler(event, context):
         verify=CACERT,
         timeout=int(Config.get_defaulted_env("HTTP_CLIENT_INTERNAL_TIMEOUT")),
     )
+
+    if not response:
+        logger.error("Failed retrieving token from the internal login endpoint")
+        return -1
+
     TOKEN = response.json()["auth"]["client_token"]
 
     if TOKEN and TOKEN != "null":
@@ -43,10 +48,14 @@ def lambda_handler(event, context):
             logger.error("Failed listing mounts or talking with a standby node")
             return -1
         MOUNTS = [
-            entry["key"]
-            for entry in response.json()["to_entries"]
-            if entry["type"] == "pki"
-        ]
+            k
+            for k, v in response.json().items()
+            if v
+            and not isinstance(v, str)
+            and not isinstance(v, bool)
+            and not isinstance(v, int)
+            and v.get("type") == "pki"
+        ]  # FIXME make this less ugly
         for mount in MOUNTS:
             # rotate each endpoint individually, add a / char as MOUNT come in this form: "pki/"
             logger.info(f"Rotating and tidying {mount}")
@@ -77,6 +86,9 @@ def lambda_handler(event, context):
             if response.status_code != 202:
                 logger.error(f"Failed tidying CRL of {mount}")
                 continue  # resume loop
-        logger.info("All CRLs rotated.")
+            logger.info(f"Rotated and tidied {mount}")
+        logger.info(
+            "All CRLs rotated."
+        )  # FIXME do we want to print a list of all the CRL that was not rotated?
     else:
         logger.warning("Could not retrieve a valid TOKEN.")
