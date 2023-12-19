@@ -55,7 +55,7 @@ def lambda_handler(event, context):
             and not isinstance(v, bool)
             and not isinstance(v, int)
             and v.get("type") == "pki"
-        ]  # FIXME make this less ugly
+        ]  # todo make this less ugly
         for mount in MOUNTS:
             # rotate each endpoint individually, add a / char as MOUNT come in this form: "pki/"
             logger.info(f"Rotating and tidying {mount}")
@@ -89,6 +89,6 @@ def lambda_handler(event, context):
             logger.info(f"Rotated and tidied {mount}")
         logger.info(
             "All CRLs rotated."
-        )  # FIXME do we want to print a list of all the CRL that was not rotated?
+        )  # todo do we want to print a list of all the CRL that was not rotated?
     else:
         logger.warning("Could not retrieve a valid TOKEN.")
