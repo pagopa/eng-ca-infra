@@ -100,9 +100,17 @@ resource "aws_lambda_function" "rotate_crl" {
 
   environment {
     variables = {
-      VAULT_0_ADDR     = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
-      VAULT_1_ADDR     = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
-      VAULT_LOGIN_PATH = var.vault_login_path
+      VAULT_0_ADDR       = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_1_ADDR       = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_LOGIN_PATH   = var.vault_login_path
+      VAULT_LIST_MOUNTS  = var.vault_list_mounts
+      VAULT_ROTATE_CRL   = var.vault_rotate_crl
+      VAULT_TIDY         = var.vault_tidy
+      VAULT_TMP_PATH     = var.vault_tmp_path
+      VAULT_CA_CERT      = var.vault_ca_cert
+      VAULT_CRL_USERNAME = var.vault_crl_username
+      PASSWORD           = data.aws_ssm_parameter.crl_renewer_password.value
+      SLACK_CHANNEL_NAME = var.slack_channel_name
     }
   }
 
