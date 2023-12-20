@@ -79,21 +79,7 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-      - name: Terraform Init
-        id: init
-        working-directory: src/infra/vault
-        run: |
-          ./terraform.sh init ${{ inputs.environment }}
-
-      - name: Terraform Plan
-        id: plan
-        working-directory: src/infra/vault
-        env:
-          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
-        run: |
-          ./terraform.sh plan ${{ inputs.environment }}
-
-      - name: Apply
+      - name: Terraform Apply
         uses: ./.github/workflows/apply
         with:
           env: ${{ inputs.environment }}
