@@ -232,6 +232,42 @@ variable "vault_root_crl_path" {
   default = "/v1/root/crl"
 }
 
+variable "vault_list_mounts" {
+  type    = string
+  default = "/sys/mounts"
+}
+
+# skip initial / char
+variable "vault_rotate_crl" {
+  type    = string
+  default = "crl/rotate"
+}
+
+variable "vault_tidy" {
+  type    = string
+  default = "tidy"
+}
+
+variable "vault_internal_login_path" {
+  type    = string
+  default = "/auth/userpass/login/"
+}
+
+variable "vault_tmp_path" {
+  type    = string
+  default = "/tmp/vault-mounts-list"
+}
+
+variable "vault_ca_cert" {
+  type    = string
+  default = "/etc/vault.d/tls.crt"
+}
+
+variable "vault_crl_username" {
+  type    = string
+  default = "crl-renewer"
+}
+
 variable "slack_channel_name" {
   type    = string
   default = ""

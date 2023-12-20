@@ -11,10 +11,8 @@ from cryptography.x509.oid import ExtensionOID as X509ExtensionOID
 from cryptography.x509.oid import NameOID as X509NameOID
 from email_validator import EmailNotValidError, validate_email
 from flask import Blueprint, Response, escape, jsonify, request
-from werkzeug.exceptions import BadRequest, ServiceUnavailable
-
-from .utils.config import Config, RequestType
-from .utils.utils import (
+from utils.config import Config, RequestType
+from utils.utils import (
     extract_client_ip,
     log,
     log_and_quit,
@@ -23,6 +21,7 @@ from .utils.utils import (
     require_authorization_header,
     require_json_request_body,
 )
+from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 # timeout for all requests
 HTTP_CLIENT_EXTERNAL_TIMEOUT = int( Config.get_defaulted_env("HTTP_CLIENT_EXTERNAL_TIMEOUT"))

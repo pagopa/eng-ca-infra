@@ -28,6 +28,21 @@ data "archive_file" "expiring_cert_checker_zip" {
   output_path = "${local.full_path_root_project}/expiring_cert_checker.zip"
 }
 
+#TODO update with a better path for the zip and the files
+data "archive_file" "rotate_crl_zip" {
+  type        = "zip"
+  source_dir  = "${local.relative_path_app}/"
+  output_path = "${local.full_path_root_project}/rotate_crl.zip"
+  excludes = [
+    "frontend",
+    "expiring-cert-checker",
+    "notifications-handler",
+    "tests",
+    "requirements.txt",
+    "requirements-dev.txt"
+  ]
+}
+
 ##
 ## Lambda functions
 ##
@@ -74,151 +89,42 @@ resource "aws_lambda_function" "expiring_cert_checker" {
   }
 }
 
+resource "aws_lambda_function" "rotate_crl" {
+  depends_on    = [data.archive_file.rotate_crl_zip]
+  filename      = data.archive_file.rotate_crl_zip.output_path
+  function_name = "rotate_crl"
+  role          = aws_iam_role.rotate_crl.arn
+  handler       = "rotate_crl.main.lambda_handler"
+  architectures = [var.lambda_arch]
+  timeout       = 6
 
-
-
-
-##
-## Roles and policies
-##
-
-resource "aws_iam_role" "expiring_cert_checker" {
-  name               = "expiring_cert_checker"
-  assume_role_policy = data.aws_iam_policy_document.expiring_cert_checker.json
-  tags               = var.tags
-}
-
-data "aws_iam_policy_document" "expiring_cert_checker" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
+  environment {
+    variables = {
+      VAULT_0_ADDR              = "http://${aws_service_discovery_service.vault[0].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_1_ADDR              = "http://${aws_service_discovery_service.vault[1].name}.${aws_service_discovery_private_dns_namespace.vault.name}:8200"
+      VAULT_INTERNAL_LOGIN_PATH = var.vault_internal_login_path
+      VAULT_LIST_MOUNTS         = var.vault_list_mounts
+      VAULT_ROTATE_CRL          = var.vault_rotate_crl
+      VAULT_TIDY                = var.vault_tidy
+      VAULT_TMP_PATH            = var.vault_tmp_path
+      VAULT_CA_CERT             = var.vault_ca_cert
+      VAULT_CRL_USERNAME        = var.vault_crl_username
+      PASSWORD                  = data.aws_ssm_parameter.crl_renewer_password.value
+      SLACK_CHANNEL_NAME        = var.slack_channel_name
     }
   }
-}
 
-resource "aws_iam_role_policy" "allow_publish_sns_expiring_cert_checker" {
-  name   = "allow_publish_sns_expiring_cert_checker"
-  policy = data.aws_iam_policy_document.allow_publish_sns_expiring_cert_checker.json
-  role   = aws_iam_role.expiring_cert_checker.id
-}
-
-data "aws_iam_policy_document" "allow_publish_sns_expiring_cert_checker" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "SNS:Publish"
-    ]
-    resources = [
-      "${aws_sns_topic.notifications.arn}"
-    ]
+  vpc_config {
+    subnet_ids         = module.vpc.private_subnets[*]
+    security_group_ids = [aws_security_group.rotate_crl.id]
   }
-}
 
-resource "aws_iam_role_policy" "cw_logs_expiring_cert_checker" {
-  name   = "cw_logs_expiring_cert_checker"
-  policy = data.aws_iam_policy_document.cw_logs_expiring_cert_checker.json
-  role   = aws_iam_role.expiring_cert_checker.name
-}
+  source_code_hash = data.archive_file.rotate_crl_zip.output_base64sha256
 
-data "aws_iam_policy_document" "cw_logs_expiring_cert_checker" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents",
-      "logs:GetLogEvents",
-      "logs:FilterLogEvents"
-    ]
-    resources = [
-      "${aws_cloudwatch_log_group.functions_expiring_cert_checker.arn}:*"
-    ]
-  }
-}
+  layers = [aws_lambda_layer_version.lambda_layer.arn]
 
-resource "aws_iam_role" "notifications_handler" {
-  name               = "notifications_handler"
-  assume_role_policy = data.aws_iam_policy_document.notifications_handler.json
-  tags               = var.tags
-}
+  runtime = "python${local.python_version}"
 
-data "aws_iam_policy_document" "notifications_handler" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role_policy" "cw_logs_notifications_handler" {
-  name   = "cw_logs_notifications_handler"
-  policy = data.aws_iam_policy_document.cw_logs_notifications_handler.json
-  role   = aws_iam_role.notifications_handler.name
-}
-
-data "aws_iam_policy_document" "cw_logs_notifications_handler" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents",
-      "logs:GetLogEvents",
-      "logs:FilterLogEvents"
-    ]
-    resources = [
-      "${aws_cloudwatch_log_group.functions_notifications_handler.arn}:*"
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "dynamodb_table_write" {
-  name   = "dynamodb_table_write"
-  policy = data.aws_iam_policy_document.dynamodb_table_write.json
-  role   = aws_iam_role.notifications_handler.name
-}
-
-data "aws_iam_policy_document" "dynamodb_table_write" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "dynamodb:PutItem",
-      "dynamodb:DeleteItem"
-    ]
-    resources = [
-      "${aws_dynamodb_table.certificate_information.arn}",
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "dynamodb_table_read_scan" {
-  name   = "dynamodb_table_read_scan"
-  policy = data.aws_iam_policy_document.dynamodb_table_read_scan.json
-  role   = aws_iam_role.expiring_cert_checker.name
-}
-
-data "aws_iam_policy_document" "dynamodb_table_read_scan" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "dynamodb:GetItem",
-      "dynamodb:Scan",
-      "dynamodb:Query"
-    ]
-    resources = [
-      "${aws_dynamodb_table.certificate_information.arn}/index/${aws_dynamodb_table.certificate_information.global_secondary_index.*.name[0]}"
-    ]
-  }
 }
 
 ##
@@ -241,16 +147,32 @@ resource "aws_cloudwatch_event_rule" "hourly_event" {
   schedule_expression = "rate(1 hour)"
 }
 
+# Expiring cert cheker
 resource "aws_cloudwatch_event_target" "invoke_expiring_cert_checker" {
   rule      = aws_cloudwatch_event_rule.hourly_event.name
   target_id = "expiring_cert_checker"
   arn       = aws_lambda_function.expiring_cert_checker.arn
 }
 
-resource "aws_lambda_permission" "event_bridge" {
+resource "aws_lambda_permission" "event_bridge_expire_cert_checker" {
   statement_id  = "AllowExecutionFromCloudwatch"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.expiring_cert_checker.arn
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.hourly_event.arn
+}
+
+# Rotate CRL
+resource "aws_cloudwatch_event_target" "invoke_rotate_crl" {
+  rule      = aws_cloudwatch_event_rule.hourly_event.name
+  target_id = "rotate_crl"
+  arn       = aws_lambda_function.rotate_crl.arn
+}
+
+resource "aws_lambda_permission" "event_bridge_rotate_crl" {
+  statement_id  = "AllowExecutionFromCloudwatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.rotate_crl.arn
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.hourly_event.arn
 }
@@ -266,5 +188,10 @@ resource "aws_cloudwatch_log_group" "functions_expiring_cert_checker" {
 
 resource "aws_cloudwatch_log_group" "functions_notifications_handler" {
   name              = "/lambda/${aws_lambda_function.notifications_handler.function_name}"
+  retention_in_days = 90
+}
+
+resource "aws_cloudwatch_log_group" "rotate_crl_application_log" {
+  name              = "/lambda/${aws_lambda_function.rotate_crl.function_name}"
   retention_in_days = 90
 }

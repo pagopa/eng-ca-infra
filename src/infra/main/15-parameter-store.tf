@@ -24,3 +24,9 @@ data "aws_ssm_parameter" "smtp_password" {
 }
 
 
+# password to get a token for the internal tool that rotates the CRLs
+# stored in SSM to avoid commiting secrets
+data "aws_ssm_parameter" "crl_renewer_password" {
+  name = "ca.eng-crl_renewer_password"
+}
+
