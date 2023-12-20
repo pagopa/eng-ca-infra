@@ -11,17 +11,17 @@ terraform {
   }
   backend "s3" {
     # managed outside tf
-    bucket  = "${var.s3_bucket_name}"
-    key     = "${var.s3_bucket_key}"
+    bucket  = var.s3_bucket_name
+    key     = var.s3_bucket_key
     encrypt = true
     # managed outside tf
-    dynamodb_table = "${var.s3_bucket_dynamodb_table}"
-    region         = "${var.aws_region}"
+    dynamodb_table = var.s3_bucket_dynamodb_table
+    region         = var.aws_region
   }
 }
 
 provider "aws" {
-  region = "${var.aws_region}"
+  region = var.aws_region
 }
 
 provider "vault" {
@@ -33,5 +33,5 @@ provider "vault" {
 # password to get a token for the internal tool that rotates the CRLs
 # stored in SSM to avoid commiting secrets
 data "aws_ssm_parameter" "crl_renewer_password" {
-  name = "ca.secops-crl_renewer_password"
+  name = "ca.eng-crl_renewer_password"
 }
