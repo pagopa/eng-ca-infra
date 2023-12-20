@@ -81,11 +81,13 @@ jobs:
 
       - name: Terraform Init
         id: init
+        working-directory: src/infra/vault
         run: |
           ./terraform.sh init ${{ inputs.environment }}
 
       - name: Terraform Plan
         id: plan
+        working-directory: src/infra/vault
         run: |
           ./terraform.sh plan ${{ inputs.environment }}
 
