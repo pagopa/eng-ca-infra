@@ -93,6 +93,13 @@ jobs:
         run: |
           ./terraform.sh plan ${{ inputs.environment }}
 
+      - name: Apply
+        uses: ./.github/workflows/apply
+        with:
+          env: ${{ inputs.environment }}
+          working-directory: src/infra/vault
+          vault-token: ${{ secrets.VAULT_TOKEN }}
+
   delete_runner:
     name: Delete Self-Hosted Runner
     needs: [create_runner, install_and_run_terraform]
