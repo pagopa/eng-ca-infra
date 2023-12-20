@@ -48,7 +48,7 @@ jobs:
 
   install_and_run_terraform:
     runs-on: [self-hosted, "run_id:${{ github.run_id }}"]
-    environment: dev
+    environment: ${{ inputs.environment }}
     needs: create_runner
     steps:
       - name: Checkout
@@ -61,7 +61,7 @@ jobs:
       - name: Install NodeJS as terraform action dep
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: "16"
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -73,27 +73,18 @@ jobs:
         working-directory: src/infra/vault
         run: |
           echo "TERRAFORM_VERSION=`cat ../../.terraform-version`" >> $GITHUB_ENV
-  
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
-  
-      - name: Terraform Init
-        id: init
-        shell: bash
-        working-directory: src/infra/vault
-        run: |
-          terraform init
- 
-      - name: Terraform plan
-        id: plan
-        shell: bash
-        working-directory: src/infra/vault
-        env:
-          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
-        run: |
-          terraform plan
+
+      - name: Terraform Apply
+        uses: ./.github/workflows/apply
+        with:
+          env: ${{ inputs.environment }}
+          working-directory: src/infra/vault
+          vault-token: ${{ secrets.VAULT_TOKEN }}
 
   delete_runner:
     name: Delete Self-Hosted Runner
@@ -104,7 +95,7 @@ jobs:
       fail-fast: true
     if: ${{ always() }}
     runs-on: ubuntu-22.04
-    environment: dev
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Stop Github Runner

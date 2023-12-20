@@ -21,9 +21,14 @@ resource "vault_github_user" "pp-ps" {
 
 ### giuseppe.montesano@pagopa.it
 resource "vault_github_user" "GiuMontesano" {
-  backend  = vault_github_auth_backend.this.id
-  user     = "GiuMontesano"
-  policies = ["intermediate-01-client-policy"]
+  backend = vault_github_auth_backend.this.id
+  user    = "GiuMontesano"
+  policies = [
+    "intermediate-01-client-policy",
+    "intermediate-03-client-policy",
+    "intermediate-04-client-policy",
+    "intermediate-05-client-policy"
+  ]
 }
 
 ### tommaso.lencioni@pagopa.it

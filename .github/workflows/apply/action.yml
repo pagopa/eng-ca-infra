@@ -8,6 +8,9 @@ inputs:
   working-directory:
     required: true
     type: string
+  vault-token:
+    required: false
+    type: string
 
 runs:
   using: "composite"
@@ -40,6 +43,8 @@ runs:
     - name: Terraform Apply
       id: apply
       shell: bash
+      env:
+        VAULT_TOKEN: ${{ inputs.vault-token }}
       working-directory: ${{ inputs.working-directory }}
       run: |
         e=${{ inputs.env }}
