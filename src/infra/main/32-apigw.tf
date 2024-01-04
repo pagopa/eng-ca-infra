@@ -11,6 +11,11 @@ resource "aws_api_gateway_rest_api" "this" {
 
 }
 
+## API Gateway cloud watch logs
+resource "aws_api_gateway_account" "main" {
+  cloudwatch_role_arn = aws_iam_role.apigw.arn
+}
+
 ##
 ## Route53
 ##
