@@ -579,3 +579,51 @@ resource "aws_iam_role_policy" "expiring_cert_checker_x_ray" {
 
 #endregion
 
+
+#---------------------------
+# Lambda Expiring Certificate Checker
+#---------------------------
+#region
+resource "aws_iam_role" "apigw" {
+  name               = "api_gateway_cloudwatch_global"
+  assume_role_policy = data.aws_iam_policy_document.apigw.json
+}
+data "aws_iam_policy_document" "apigw" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["apigateway.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role_policy" "apigw_cw" {
+  name   = "api_gateway_cloudwatch_global"
+  role   = aws_iam_role.apigw.id
+  policy = data.aws_iam_policy_document.apigw_cw.json
+}
+
+data "aws_iam_policy_document" "apigw_cw" {
+  # the "*" must be the only resource presents
+  # inside this statement. It's not possible to 
+  # specify a single log group.
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents"
+    ]
+    resources = ["*"]
+  }
+}
+
+#endregion
