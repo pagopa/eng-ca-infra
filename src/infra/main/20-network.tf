@@ -10,7 +10,7 @@ module "vpc" {
   public_subnet_suffix  = "public"
   intra_subnets         = var.vpc_internal_subnets_cidr
   enable_nat_gateway    = var.enable_nat_gateway
-  single_nat_gateway    = true
+  single_nat_gateway    = var.env_short == "d" ? true : false
   reuse_nat_ips         = false
 
 
@@ -21,6 +21,11 @@ module "vpc" {
   manage_default_network_acl    = false
   manage_default_route_table    = false
 
+}
+
+data "aws_security_group" "default" {
+  name   = "default"
+  vpc_id = module.vpc.vpc_id
 }
 
 #---------------------------
@@ -178,28 +183,94 @@ resource "aws_security_group_rule" "rotate_crl_egress_vault" {
 ## VPC endpoints
 #---------------------------
 # Needed to make Lambdas talk to SSM.
-resource "aws_vpc_endpoint" "ssm" {
-  for_each = toset([
-    format("com.amazonaws.%s.ssm", var.aws_region),
-    format("com.amazonaws.%s.ec2messages", var.aws_region),
-  ])
+# resource "aws_vpc_endpoint" "ssm" {
+#   for_each = toset([
+#     format("com.amazonaws.%s.ssm", var.aws_region),
+#     format("com.amazonaws.%s.ec2messages", var.aws_region),
+#   ])
+#   vpc_id             = module.vpc.vpc_id
+#   service_name       = each.key
+#   vpc_endpoint_type  = "Interface"
+#   subnet_ids         = module.vpc.private_subnets[*]
+#   security_group_ids = [aws_security_group.frontend.id, aws_security_group.rotate_crl.id]
+
+#   private_dns_enabled = true
+# }
+
+# # Needed to make Lambda talk to SNS.
+# resource "aws_vpc_endpoint" "sns" {
+#   vpc_id             = module.vpc.vpc_id
+#   service_name       = format("com.amazonaws.%s.sns", var.aws_region)
+#   vpc_endpoint_type  = "Interface"
+#   subnet_ids         = module.vpc.private_subnets[*]
+#   security_group_ids = [aws_security_group.frontend.id]
+
+#   private_dns_enabled = true
+# }
+
+# # Needed to avoid routing through internet for DynamoDB
+# resource "aws_vpc_endpoint" "dynamo_db" {
+#   vpc_id             = module.vpc.vpc_id
+#   service_name       = format("com.amazonaws.%s.dynamodb", var.aws_region)
+#   vpc_endpoint_type  = "Gateway"
+#   subnet_ids         = module.vpc.private_subnets[*]
+#   security_group_ids = [aws_security_group.rotate_crl.id, aws_security_group.vault.id]
+
+#   private_dns_enabled = true
+# }
+
+# # Needed to avoid routing through internet for Cloudwatch
+# resource "aws_vpc_endpoint" "cloudwatch" {
+#   vpc_id             = module.vpc.vpc_id
+#   service_name       = format("com.amazonaws.%s.logs", var.aws_region)
+#   vpc_endpoint_type  = "Interface"
+#   subnet_ids         = module.vpc.private_subnets[*]
+#   security_group_ids = [aws_security_group.frontend.id, aws_security_group.rotate_crl.id, aws_security_group.vault.id]
+
+#   private_dns_enabled = true
+# }
+
+
+module "vpc_endpoints" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-vpc.git//modules/vpc-endpoints?ref=41da6881e295ff5e94bbf97b41018e7c550c7285"
+
   vpc_id             = module.vpc.vpc_id
-  service_name       = each.key
-  vpc_endpoint_type  = "Interface"
-  subnet_ids         = module.vpc.private_subnets[*]
-  security_group_ids = [aws_security_group.frontend.id, aws_security_group.rotate_crl.id]
+  security_group_ids = [data.aws_security_group.default.id, aws_security_group.frontend.id, aws_security_group.rotate_crl.id, aws_security_group.vault.id]
 
-  private_dns_enabled = true
+  endpoints = {
+    sns = {
+      service             = "sns"
+      private_dns_enabled = true
+      subnet_ids          = module.vpc.private_subnets
+      security_group_ids  = [aws_security_group.frontend.id]
+      tags                = { Name = "sns-vpc-endpoint" }
+    },
+    ssm = {
+      service             = "ssm"
+      private_dns_enabled = true
+      subnet_ids          = module.vpc.private_subnets
+      security_group_ids  = [aws_security_group.frontend.id, aws_security_group.rotate_crl.id]
+      tags                = { Name = "ssm-vpc-endpoint" }
+    },
+    ec2messages = {
+      service             = "ec2messages"
+      private_dns_enabled = true
+      subnet_ids          = module.vpc.private_subnets
+      security_group_ids  = [aws_security_group.frontend.id, aws_security_group.rotate_crl.id]
+      tags                = { Name = "ec2messages-vpc-endpoint" }
+    },
+    logs = {
+      service             = "logs"
+      private_dns_enabled = true
+      subnet_ids          = module.vpc.private_subnets
+      security_group_ids  = [aws_security_group.frontend.id, aws_security_group.rotate_crl.id, aws_security_group.vault.id]
+      tags                = { Name = "logs-endpoint" }
+    },
+    dynamodb = {
+      service         = "dynamodb"
+      service_type    = "Gateway"
+      route_table_ids = flatten([module.vpc.intra_route_table_ids, module.vpc.private_route_table_ids, module.vpc.public_route_table_ids])
+      tags            = { Name = "dynamodb-vpc-endpoint" }
+    },
+  }
 }
-
-# Needed to make Lambda talk to SNS.
-resource "aws_vpc_endpoint" "sns" {
-  vpc_id             = module.vpc.vpc_id
-  service_name       = format("com.amazonaws.%s.sns", var.aws_region)
-  vpc_endpoint_type  = "Interface"
-  subnet_ids         = module.vpc.private_subnets[*]
-  security_group_ids = [aws_security_group.frontend.id]
-
-  private_dns_enabled = true
-}
-

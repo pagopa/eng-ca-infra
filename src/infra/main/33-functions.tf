@@ -139,17 +139,17 @@ resource "aws_lambda_permission" "sns" {
 }
 
 ##
-## Trigger lambda from Event Bridge hourly
+## Trigger lambda from Event Bridge daily
 ##
 
-resource "aws_cloudwatch_event_rule" "hourly_event" {
-  name                = "hourly_event"
-  schedule_expression = "rate(1 hour)"
+resource "aws_cloudwatch_event_rule" "daily_event" {
+  name                = "daily_event"
+  schedule_expression = "rate(1 day)"
 }
 
 # Expiring cert cheker
 resource "aws_cloudwatch_event_target" "invoke_expiring_cert_checker" {
-  rule      = aws_cloudwatch_event_rule.hourly_event.name
+  rule      = aws_cloudwatch_event_rule.daily_event.name
   target_id = "expiring_cert_checker"
   arn       = aws_lambda_function.expiring_cert_checker.arn
 }
@@ -159,12 +159,12 @@ resource "aws_lambda_permission" "event_bridge_expire_cert_checker" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.expiring_cert_checker.arn
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.hourly_event.arn
+  source_arn    = aws_cloudwatch_event_rule.daily_event.arn
 }
 
 # Rotate CRL
 resource "aws_cloudwatch_event_target" "invoke_rotate_crl" {
-  rule      = aws_cloudwatch_event_rule.hourly_event.name
+  rule      = aws_cloudwatch_event_rule.daily_event.name
   target_id = "rotate_crl"
   arn       = aws_lambda_function.rotate_crl.arn
 }
@@ -174,7 +174,7 @@ resource "aws_lambda_permission" "event_bridge_rotate_crl" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.rotate_crl.arn
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.hourly_event.arn
+  source_arn    = aws_cloudwatch_event_rule.daily_event.arn
 }
 
 ##
