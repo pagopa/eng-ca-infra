@@ -1,4 +1,4 @@
-"""Lambda triggered every hours to update the Vault's CRL"""
+"""Lambda triggered once per day to update the Vault's CRL"""
 import json
 
 import requests
