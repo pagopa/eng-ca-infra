@@ -1,4 +1,4 @@
-requests==2.27.1
+requests==2.32.0
 werkzeug==2.3.7
 flask==2.1.2
 cryptography==38.0.3
