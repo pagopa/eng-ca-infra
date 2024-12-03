@@ -1,6 +1,6 @@
 requests==2.27.1
 werkzeug==3.0.6
-flask==2.1.2
+flask==2.2.5
 cryptography==38.0.3
 boto3==1.22.9
 botocore==1.25.10
